@@ -96,6 +96,8 @@ public class ServerTls {
         @Override
         public void sayHello (HelloRequest request, StreamObserver<HelloReply> responseObserver) {
 //          super.sayHello(request, responseObserver);
+            String clientId = Constants.CLIENT_ID_CONTEXT_KEY.get();
+
             String message = serverImpl.sayHello(request.getName());
 
             HelloReply reply = HelloReply
