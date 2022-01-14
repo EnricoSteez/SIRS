@@ -1,0 +1,48 @@
+syntax = "proto3";
+option java_multiple_files = true;
+
+service HospitalService {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc RetrievePatientInfo(PatientInfoRequest) returns (PatientInfoReply) {}
+  rpc Login(LoginRequest) returns (LoginReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
+
+message PatientInfoRequest {
+  string patientID = 1;
+  string role = 2;
+}
+message PatientInfoReply {
+  PatientInfo infos = 1;
+}
+
+message PatientInfo {
+  optional int32 id = 1;
+  optional string name = 2;
+  optional string surname = 3;
+  optional string address = 4;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginReply {
+  enum Code {
+    SUCCESS = 0;
+    WRONGUSER = 1;
+    WRONGPASS = 2;
+  }
+  Code code = 1;
+}
+
