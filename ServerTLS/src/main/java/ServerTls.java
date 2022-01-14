@@ -65,7 +65,7 @@ public class ServerTls {
     public static void main (String[] args) throws IOException, InterruptedException {
         if (args.length < 3 || args.length > 4) {
             System.out.println(
-                    "USAGE: HelloWorldServerTls port certChainFilePath privateKeyFilePath " +
+                    "USAGE: ServerTls port certChainFilePath privateKeyFilePath " +
                             "[trustCertCollectionFilePath]\n  Note: You only need to supply trustCertCollectionFilePath if you want " +
                             "to enable Mutual TLS.");
             System.exit(0);
