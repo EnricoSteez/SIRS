@@ -5,4 +5,7 @@
  */
 public class ServerImpl {
 
+    public String sayHello (String name) {
+        return "Ciao " + name;
+    }
 }

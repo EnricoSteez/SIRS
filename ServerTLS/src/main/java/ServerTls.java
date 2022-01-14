@@ -87,12 +87,27 @@ public class ServerTls {
     }
 
     //check permission policy and eventually delegate data retrieval to implementation class
-    static class Service extends TestServiceGrpc.TestServiceImplBase {
+    static class Service extends HospitalServiceGrpc.HospitalServiceImplBase {
+        private final ServerImpl serverImpl = new ServerImpl();
+
+        //this is a general template to define a method
+        //parse request, delegate to implementation and send response
+        // the real code of the function should be in the serverImpl class
         @Override
         public void sayHello (HelloRequest request, StreamObserver<HelloReply> responseObserver) {
-//            super.sayHello(request, responseObserver);
+//          super.sayHello(request, responseObserver);
+            String message = serverImpl.sayHello(request.getName());
 
+            HelloReply reply = HelloReply
+                    .newBuilder()
+                    .setMessage(message)
+                    .build();
+
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
+
+
     }
 
 }

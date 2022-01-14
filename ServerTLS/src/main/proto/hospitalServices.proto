@@ -1,9 +1,10 @@
 syntax = "proto3";
 option java_multiple_files = true;
 
-service TestService {
+service HospitalService {
   rpc SayHello (HelloRequest) returns (HelloReply) {}
   rpc RetrievePatientInfo(PatientInfoRequest) returns (PatientInfoReply) {}
+  rpc Login(LoginRequest) returns (LoginReply) {}
 }
 
 // The request message containing the user's name.
@@ -30,3 +31,18 @@ message PatientInfo {
   optional string surname = 3;
   optional string address = 4;
 }
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginReply {
+  enum Code {
+    SUCCESS = 0;
+    WRONGUSER = 1;
+    WRONGPASS = 2;
+  }
+  Code code = 1;
+}
+
