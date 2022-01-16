@@ -69,6 +69,12 @@ public class Client {
                 .build();
         try {
             Client client = new Client(channel);
+            client.login();
+            String id = inputPatientId();
+
+            while(!id.equals("-1")){
+                retrievePatientInfo();
+            }
             client.greet(host);
         } finally {
             channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
