@@ -1,5 +1,7 @@
 import com.google.protobuf.ByteString;
 
+import java.util.List;
+
 /**
  * ServerImpl is a class that implements data retrieval methods (APIs)
  * The ServerTls accesses these methods to retrieve the patients information
@@ -16,16 +18,12 @@ public class ServerImpl {
         return LoginReply.Code.SUCCESS;
     }
 
-    public PatientInfo retrievePatientInfo (String patientID, String whoami) {
+    public PatientInfoReply retrievePatientInfo (int patientID, String whoami, List<Integer> selectionsList) {
         //TODO XACML PERMISSION REQUEST
         //For the moment, let's retrieve all the shit
         //we will figure it out later
-        PatientInfo info = PatientInfo.newBuilder()
-                .setId(1111)
-                .setName("Enrico")
-                .setSurname("Giorio")
-                .setAddress("Alameda Doma Afonso Henriques 23")
-                .build();
+        PatientInfoReply info = PatientInfoReply.newBuilder().build();
+
         return info;
     }
 }

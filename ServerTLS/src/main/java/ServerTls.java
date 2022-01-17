@@ -114,13 +114,12 @@ public class ServerTls {
 //            super.login(request, responseObserver);
             LoginReply.Code code = serverImpl.tryLogin(request.getUsername(), request.getPassword());
             LoginReply reply = LoginReply.newBuilder().setCode(code).build();
-
         }
 
         @Override
         public void retrievePatientInfo (PatientInfoRequest request, StreamObserver<PatientInfoReply> responseObserver) {
 //            super.retrievePatientInfo(request, responseObserver);
-            PatientInfo info = serverImpl.retrievePatientInfo(request.getPatientID(),request.getRole());
+            PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientID(), request.getRole(), request.getSelectionsList());
         }
     }
 

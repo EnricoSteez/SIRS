@@ -5,11 +5,9 @@ import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import io.grpc.TlsChannelCredentials;
 
-import java.io.Console;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +18,8 @@ public class Client {
     private static final Logger logger = Logger.getLogger(Client.class.getName());
 
     private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
+
+    private static Role userRole = null;
 
     /**
      * Construct client for accessing RouteGuide server using the existing channel.
@@ -67,16 +67,15 @@ public class Client {
                 .build();
         LoginReply reply = blockingStub.login(request);
 
+        if(reply.getCode() == LoginReply.Code.SUCCESS)
+            userRole = reply.getRole();
+
         return reply.getCode();
     }
 
-    /**
-     *
-     * @param args
-     * @throws Exception
-     */
-    private static String inputPatientId () {
-        System.out.println("Insert PatinentID to retrieve info!");
+    private static int inputPatientId () {
+        System.out.println("Insert PatientID to retrieve info, -1 to exit");
+        return Integer.parseInt(System.console().readLine());
     }
 
 
@@ -117,10 +116,11 @@ public class Client {
                 System.out.println("Login failed, retry");
                 success = client.login(host);
             }
-            String id = inputPatientId();
+            int id = inputPatientId();
 
-            while(!id.equals("-1")){
-                retrievePatientInfo(id,);
+            while(id!=-1){
+                retrievePatientInfo(id);
+                id=inputPatientId();
             }
             client.greet(host);
         } finally {
@@ -128,6 +128,11 @@ public class Client {
         }
     }
 
+    private static void retrievePatientInfo (int id) {
+        PatientInfoRequest request = PatientInfoRequest.newBuilder()
+                .setPatientID(id)
+                .setRole(userRole).build();
+    }
 
 
     private byte[] toBytes(char[] chars) {
