@@ -120,7 +120,7 @@ public class Client {
             String id = inputPatientId();
 
             while(!id.equals("-1")){
-                retrievePatientInfo();
+                retrievePatientInfo(id,);
             }
             client.greet(host);
         } finally {

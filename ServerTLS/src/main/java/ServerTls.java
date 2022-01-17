@@ -112,7 +112,7 @@ public class ServerTls {
         @Override
         public void login (LoginRequest request, StreamObserver<LoginReply> responseObserver) {
 //            super.login(request, responseObserver);
-            LoginReply.Code code = serverImpl.tryLogin(request.getUsername(), request.getPasswordBytes());
+            LoginReply.Code code = serverImpl.tryLogin(request.getUsername(), request.getPassword());
             LoginReply reply = LoginReply.newBuilder().setCode(code).build();
 
         }
@@ -120,7 +120,7 @@ public class ServerTls {
         @Override
         public void retrievePatientInfo (PatientInfoRequest request, StreamObserver<PatientInfoReply> responseObserver) {
 //            super.retrievePatientInfo(request, responseObserver);
-            PatientInfo info = serverImpl.retrievePatientInfo(request.getPatientID(),request.getWhoami());
+            PatientInfo info = serverImpl.retrievePatientInfo(request.getPatientID(),request.getRole());
         }
     }
 
