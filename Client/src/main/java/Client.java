@@ -1,9 +1,17 @@
+import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import io.grpc.TlsChannelCredentials;
+
+import java.io.Console;
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,6 +48,39 @@ public class Client {
      * Greet server. If provided, the first element of {@code args} is the name to use in the
      * greeting.
      */
+
+    /**
+     *
+     * @return {@code 0} if login is successful;
+     * {@code -1} otherwise
+     * @param host is the IP of the server
+     */
+    private LoginReply.Code login (String host) {
+        System.out.println("Username:");
+        String username = System.console().readLine();
+        System.out.println("Password:");
+        char[] password = System.console().readPassword();
+
+        LoginRequest request = LoginRequest.newBuilder()
+                .setUsername(username)
+                .setPassword(ByteString.copyFrom(toBytes(password)))
+                .build();
+        LoginReply reply = blockingStub.login(request);
+
+        return reply.getCode();
+    }
+
+    /**
+     *
+     * @param args
+     * @throws Exception
+     */
+    private static String inputPatientId () {
+        System.out.println("Insert PatinentID to retrieve info!");
+    }
+
+
+
     public static void main(String[] args) throws Exception {
 
         if (args.length < 2 || args.length == 4 || args.length > 5) {
@@ -69,7 +110,13 @@ public class Client {
                 .build();
         try {
             Client client = new Client(channel);
-            client.login();
+            client.greet(host);
+
+            LoginReply.Code success = client.login(host);
+            while(success != LoginReply.Code.SUCCESS){
+                System.out.println("Login failed, retry");
+                success = client.login(host);
+            }
             String id = inputPatientId();
 
             while(!id.equals("-1")){
@@ -80,4 +127,17 @@ public class Client {
             channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
+
+
+
+    private byte[] toBytes(char[] chars) {
+        CharBuffer charBuffer = CharBuffer.wrap(chars);
+        ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
+        byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
+                byteBuffer.position(), byteBuffer.limit());
+        Arrays.fill(byteBuffer.array(), (byte) 0); // clear sensitive data
+        return bytes;
+    }
+
+
 }

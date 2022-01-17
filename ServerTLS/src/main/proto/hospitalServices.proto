@@ -19,7 +19,7 @@ message HelloReply {
 
 message PatientInfoRequest {
   string patientID = 1;
-  string role = 2;
+  string whoami = 2;
 }
 message PatientInfoReply {
   PatientInfo infos = 1;
