@@ -18,7 +18,7 @@ public class ServerImpl {
         return LoginReply.Code.SUCCESS;
     }
 
-    public PatientInfoReply retrievePatientInfo (int patientID, String whoami, List<Integer> selectionsList) {
+    public PatientInfoReply retrievePatientInfo (int patientID, Role whoami, List<Integer> selectionsList) {
         //TODO XACML PERMISSION REQUEST
         //For the moment, let's retrieve all the shit
         //we will figure it out later

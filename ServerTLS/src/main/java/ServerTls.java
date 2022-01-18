@@ -27,7 +27,7 @@ public class ServerTls {
 
     private void start () throws IOException {
         server = Grpc.newServerBuilderForPort(port, creds)
-                .addService(new Service())
+                .addService(new HospitalService())
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
@@ -87,7 +87,7 @@ public class ServerTls {
     }
 
     //check permission policy and eventually delegate data retrieval to implementation class
-    static class Service extends HospitalServiceGrpc.HospitalServiceImplBase {
+    static class HospitalService extends HospitalServiceGrpc.HospitalServiceImplBase {
         private final ServerImpl serverImpl = new ServerImpl();
 
         //this is a general template to define a method
@@ -120,6 +120,15 @@ public class ServerTls {
         public void retrievePatientInfo (PatientInfoRequest request, StreamObserver<PatientInfoReply> responseObserver) {
 //            super.retrievePatientInfo(request, responseObserver);
             PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientID(), request.getRole(), request.getSelectionsList());
+        }
+
+
+    }
+
+    static class XACMLService extends XACMLServiceGrpc.XACMLServiceImplBase {
+        @Override
+        public void dummyValidationForTesting (DummyValidationRequest request, StreamObserver<DummyValidationReply> responseObserver) {
+            super.dummyValidationForTesting(request, responseObserver);
         }
     }
 
