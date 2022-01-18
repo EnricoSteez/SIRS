@@ -6,6 +6,15 @@ service HospitalService {
   rpc RetrievePatientInfo (PatientInfoRequest) returns (PatientInfoReply) {}
   rpc Login(LoginRequest) returns (LoginReply) {}
 }
+enum Role {
+  LAB_EMPLOYEE = 0;
+  DOCTOR = 1;
+  NURSE = 2;
+  PATIENT_SERVICES_ASSISTANT = 3;
+  CLINICAL_ASSISTANT = 4;
+  PORTER_VOLUNTEER = 5;
+  WARD_CLERK = 6;
+}
 
 // The request message containing the user's name.
 message HelloRequest {
@@ -18,8 +27,17 @@ message HelloReply {
 }
 
 message PatientInfoRequest {
+//  enum Role {
+//    LAB_EMPLOYEE = 0;
+//    DOCTOR = 1;
+//    NURSE = 2;
+//    PATIENT_SERVICES_ASSISTANT = 3;
+//    CLINICAL_ASSISTANT = 4;
+//    PORTER_VOLUNTEER = 5;
+//    WARD_CLERK = 6;
+//  }
   int32 patientID = 1;
-  string role = 2;
+  Role role = 2;
   repeated int32 selections = 3;
 }
 message PatientInfoReply {
@@ -63,15 +81,16 @@ message LoginReply {
     WRONGUSER = 1;
     WRONGPASS = 2;
   }
-  enum Role {
-    LAB_EMPLOYEE = 0;
-    DOCTOR = 1;
-    NURSE = 2;
-    PATIENT_SERVICES_ASSISTANT = 3;
-    CLINICAL_ASSISTANT = 4;
-    PORTER_VOLUNTEER = 5;
-    WARD_CLERK = 6;
-  }
+//  enum Role {
+//    LAB_EMPLOYEE = 0;
+//    DOCTOR = 1;
+//    NURSE = 2;
+//    PATIENT_SERVICES_ASSISTANT = 3;
+//    CLINICAL_ASSISTANT = 4;
+//    PORTER_VOLUNTEER = 5;
+//    WARD_CLERK = 6;
+//  }
   Code code = 1;
   Role role = 2;
 }
+

@@ -109,7 +109,18 @@ public class ServerTls {
             responseObserver.onCompleted();
         }
 
+        @Override
+        public void login (LoginRequest request, StreamObserver<LoginReply> responseObserver) {
+//            super.login(request, responseObserver);
+            LoginReply.Code code = serverImpl.tryLogin(request.getUsername(), request.getPassword());
+            LoginReply reply = LoginReply.newBuilder().setCode(code).build();
+        }
 
+        @Override
+        public void retrievePatientInfo (PatientInfoRequest request, StreamObserver<PatientInfoReply> responseObserver) {
+//            super.retrievePatientInfo(request, responseObserver);
+            PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientID(), request.getRole(), request.getSelectionsList());
+        }
     }
 
 }
