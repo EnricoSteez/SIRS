@@ -1,11 +1,18 @@
+import com.google.protobuf.ByteString;
 import io.grpc.Grpc;
 import io.grpc.Server;
 import io.grpc.ServerCredentials;
 import io.grpc.TlsServerCredentials;
 import io.grpc.stub.StreamObserver;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.File;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.logging.Logger;
 
 
@@ -28,6 +35,7 @@ public class ServerTls {
     private void start () throws IOException {
         server = Grpc.newServerBuilderForPort(port, creds)
                 .addService(new HospitalService())
+                .addService(new XACMLService())
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
@@ -122,7 +130,14 @@ public class ServerTls {
             PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientID(), request.getRole(), request.getSelectionsList());
         }
 
+        @Override
+        public void register (RegisterRequest request, StreamObserver<RegisterReply> responseObserver)  {
+//            super.register(request, responseObserver);
+            String username = request.getUsername();
+            byte[] password = request.getPassword().toByteArray();
+            serverImpl.registerUser(username, password);
 
+        }
     }
 
     static class XACMLService extends XACMLServiceGrpc.XACMLServiceImplBase {

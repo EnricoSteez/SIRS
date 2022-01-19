@@ -99,7 +99,7 @@ message LoginReply {
 
 message RegisterRequest {
   string username = 1;
-  string passwordHash = 2;
+  bytes password = 2;
   Role role = 3;
 }
 
