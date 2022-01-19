@@ -61,7 +61,12 @@ public class ServerImpl {
             return false;
         }
 
-        //TODO STORE HASH AND SALT IN THE DATABASE
+        //prepend salt to the generated hash
+        byte[] recordToStore = new byte[hash.length + salt.length];
+        System.arraycopy(salt,0,recordToStore,0,salt.length);
+        System.arraycopy(hash,0,recordToStore,salt.length, hash.length);
+
+        //TODO STORE recordToStore in the database as passowrd for user 'username'
         return true;
     }
 }

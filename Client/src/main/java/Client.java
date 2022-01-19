@@ -114,7 +114,7 @@ public class Client {
         int port = Integer.parseInt(args[1]);
         ManagedChannel channel = Grpc.newChannelBuilderForAddress(host, port, tlsBuilder.build())
                 /* Only for using provided test certs. */
-                .overrideAuthority("foo.test.google.fr")
+//                .overrideAuthority("foo.test.google.fr")
                 .build();
         try {
             Client client = new Client(channel);
