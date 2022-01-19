@@ -20,7 +20,8 @@ public class ServerImpl {
     }
 
     public LoginReply.Code tryLogin (String username, ByteString passwordBytes) {
-        //TODO IMPLEMENT DATABASE CHECK FOR LOGIN PROCEDURE
+        char[] password = convertToCharArray(passwordBytes.toByteArray());
+        //TODO IMPLEMENT DATABASE CHECK FOR LOGIN PROCEDURE with 'username' and 'password'
         return LoginReply.Code.SUCCESS;
     }
 
