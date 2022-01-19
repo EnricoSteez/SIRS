@@ -1,11 +1,18 @@
+import com.google.protobuf.ByteString;
 import io.grpc.Grpc;
 import io.grpc.Server;
 import io.grpc.ServerCredentials;
 import io.grpc.TlsServerCredentials;
 import io.grpc.stub.StreamObserver;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.File;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.logging.Logger;
 
 
@@ -27,7 +34,8 @@ public class ServerTls {
 
     private void start () throws IOException {
         server = Grpc.newServerBuilderForPort(port, creds)
-                .addService(new Service())
+                .addService(new HospitalService())
+                .addService(new XACMLService())
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
@@ -87,7 +95,7 @@ public class ServerTls {
     }
 
     //check permission policy and eventually delegate data retrieval to implementation class
-    static class Service extends HospitalServiceGrpc.HospitalServiceImplBase {
+    static class HospitalService extends HospitalServiceGrpc.HospitalServiceImplBase {
         private final ServerImpl serverImpl = new ServerImpl();
 
         //this is a general template to define a method
@@ -114,12 +122,38 @@ public class ServerTls {
 //            super.login(request, responseObserver);
             LoginReply.Code code = serverImpl.tryLogin(request.getUsername(), request.getPassword());
             LoginReply reply = LoginReply.newBuilder().setCode(code).build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
 
         @Override
         public void retrievePatientInfo (PatientInfoRequest request, StreamObserver<PatientInfoReply> responseObserver) {
 //            super.retrievePatientInfo(request, responseObserver);
             PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientID(), request.getRole(), request.getSelectionsList());
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        }
+
+        @Override
+        public void register (RegisterRequest request, StreamObserver<RegisterReply> responseObserver)  {
+//            super.register(request, responseObserver);
+            String username = request.getUsername();
+            byte[] password = request.getPassword().toByteArray();
+            boolean ok = serverImpl.registerUser(username, password);
+            RegisterReply reply = RegisterReply.newBuilder().setOk(ok).build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+
+        }
+    }
+
+    static class XACMLService extends XACMLServiceGrpc.XACMLServiceImplBase {
+        @Override
+        public void dummyValidationForTesting (DummyValidationRequest request, StreamObserver<DummyValidationReply> responseObserver) {
+            super.dummyValidationForTesting(request, responseObserver);
+            DummyValidationReply reply = DummyValidationReply.newBuilder().build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
     }
 

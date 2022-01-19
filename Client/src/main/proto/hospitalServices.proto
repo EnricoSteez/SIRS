@@ -48,14 +48,14 @@ message PatientInfoReply {
 }
 
 message MedicalRecords {
-  optional string name = 1;
-  optional string surname = 2;
+  string nameSurname = 1;
   PersonalData personalData = 3;
   repeated string problems = 4;
   repeated string medications = 5;
   string healthHistory = 6;
   string allergies = 7;
   repeated VisitDate visitsHistory = 8;
+  bool permitted = 9;
 }
 
 message PersonalData {
@@ -92,5 +92,16 @@ message LoginReply {
 //  }
   Code code = 1;
   Role role = 2;
+}
+
+
+message RegisterRequest {
+  string username = 1;
+  bytes password = 2;
+  Role role = 3;
+}
+
+message RegisterReply {
+  bool ok = 1;
 }
 

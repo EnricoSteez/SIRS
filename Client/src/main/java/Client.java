@@ -9,7 +9,10 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,6 +23,7 @@ public class Client {
     private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
 
     private static Role userRole = null;
+    private static String loggedUser = null;
 
     /**
      * Construct client for accessing RouteGuide server using the existing channel.
@@ -67,15 +71,20 @@ public class Client {
                 .build();
         LoginReply reply = blockingStub.login(request);
 
-        if(reply.getCode() == LoginReply.Code.SUCCESS)
+        if(reply.getCode() == LoginReply.Code.SUCCESS) {
             userRole = reply.getRole();
+            loggedUser = username;
+        }
 
         return reply.getCode();
     }
 
-    private static int inputPatientId () {
-        System.out.println("Insert PatientID to retrieve info, -1 to exit");
-        return Integer.parseInt(System.console().readLine());
+    private MedicalRecords retrievePatientInfo (int id, List<Integer> selectedNumbers) {
+        PatientInfoRequest request = PatientInfoRequest.newBuilder()
+                .setPatientID(id)
+                .setRole(userRole).build();
+        PatientInfoReply reply = blockingStub.retrievePatientInfo(request);
+        return reply.getRecords();
     }
 
 
@@ -111,29 +120,79 @@ public class Client {
             Client client = new Client(channel);
             client.greet(host);
 
-            LoginReply.Code success = client.login(host);
-            while(success != LoginReply.Code.SUCCESS){
-                System.out.println("Login failed, retry");
-                success = client.login(host);
+            LoginReply.Code loginCode = LoginReply.Code.UNRECOGNIZED;
+            //LOGIN ONLY ONCE, TO LOG WITH A DIFFERENT USER, JUST QUIT AND RERUN THE CLIENT FOR SIMPLICITY
+            while (!loginCode.equals(LoginReply.Code.SUCCESS)) { //REPEAT LOGIN UNTIL SUCCESSFUL
+                loginCode = client.login(host);
+                switch (loginCode) {
+                    case WRONGPASS:
+                        System.out.println("Incorrect Password");
+                    case UNRECOGNIZED:
+                        System.out.println("You are not registered!");
+                    case SUCCESS:
+                        System.out.println("Welcome!!");
+                }
             }
-            int id = inputPatientId();
+            //AFTER SUCCESSFUL LOGIN, A USER INTERACTION LOOP STARTS UNTIL LOGOUT
+            System.out.println("Insert PatientID to retrieve info, -1 to logout");
+            int id;
+            try {
+                id = Integer.parseInt(System.console().readLine());
+            } catch (Exception e){
+                id = -1;
+            }
+            while (id > 0){ //DO STUFF UNTIL LOGOUT
 
-            while(id!=-1){
-                retrievePatientInfo(id);
-                id=inputPatientId();
+                boolean legalSelections = false;
+                List<Integer> selectedNumbers = new ArrayList<Integer>();
+
+                while (!legalSelections) { //REPEAT SELECTION UNTIL VALID
+                    legalSelections = true;
+
+                    System.out.println("Select the information you would like to retrieve:");
+                    System.out.println("Options:");
+                    System.out.println("[1] -> Name Surname");
+                    System.out.println("[2] -> Personal Information (home address, email, health number)");
+                    System.out.println("[3] -> Health Issues");
+                    System.out.println("[4] -> Prescribed Medications");
+                    System.out.println("[5] -> Health History");
+                    System.out.println("[6] -> Allergies");
+                    System.out.println("[7] -> Past visits history");
+                    System.out.println("[8] -> Complete Medical Records");
+                    System.out.println("Insert either a list of selections or 8, followd by ENTER.\nDo not insert 8 along with other selections, please:");
+                    String selections = System.console().readLine();
+                    StringTokenizer tokenizer = new StringTokenizer(selections);
+
+                    if (tokenizer.countTokens() > 0) {
+                        while (tokenizer.hasMoreTokens()) {
+                            String token = tokenizer.nextToken();
+                            try {
+                                int oneSelection = Integer.parseInt(token);
+                                selectedNumbers.add(oneSelection);
+                            } catch (Exception badSelectionFormat) {
+                                legalSelections = false;
+                                System.out.println("'" + token + "' is not a valid selction! Select again...");
+                            }
+                        }
+                    } else { // NO SELECTIONS
+                        System.out.println("You must select something");
+                        legalSelections = false;
+                    }
+                    //EVENTUALLY THE USER WILL SELECT SOMETHING VALID, THE REQUEST TO THE SERVER IS THEN MADE
+                    MedicalRecords patientRecords = client.retrievePatientInfo(id, selectedNumbers);
+                    client.printRecords(patientRecords);
+                }
+                System.out.println("Insert another PatientID to retrieve info, -1 to logout");
+                try {
+                    id = Integer.parseInt(System.console().readLine());
+                } catch (Exception e){
+                    id = -1;
+                }
             }
-            client.greet(host);
         } finally {
             channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
-
-    private static void retrievePatientInfo (int id) {
-        PatientInfoRequest request = PatientInfoRequest.newBuilder()
-                .setPatientID(id)
-                .setRole(userRole).build();
-    }
-
 
     private byte[] toBytes(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);
@@ -143,6 +202,18 @@ public class Client {
         Arrays.fill(byteBuffer.array(), (byte) 0); // clear sensitive data
         return bytes;
     }
+
+    private void printRecords(MedicalRecords records){
+        StringBuilder builder = new StringBuilder();
+        for(Object o : records.getAllFields().values()){
+            builder.append(o.toString());
+            builder.append("\n");
+        }
+
+        System.out.println(builder);
+    }
+
+
 
 
 }
