@@ -122,12 +122,16 @@ public class ServerTls {
 //            super.login(request, responseObserver);
             LoginReply.Code code = serverImpl.tryLogin(request.getUsername(), request.getPassword());
             LoginReply reply = LoginReply.newBuilder().setCode(code).build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
 
         @Override
         public void retrievePatientInfo (PatientInfoRequest request, StreamObserver<PatientInfoReply> responseObserver) {
 //            super.retrievePatientInfo(request, responseObserver);
             PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientID(), request.getRole(), request.getSelectionsList());
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
 
         @Override
@@ -135,7 +139,10 @@ public class ServerTls {
 //            super.register(request, responseObserver);
             String username = request.getUsername();
             byte[] password = request.getPassword().toByteArray();
-            serverImpl.registerUser(username, password);
+            boolean ok = serverImpl.registerUser(username, password);
+            RegisterReply reply = RegisterReply.newBuilder().setOk(ok).build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
 
         }
     }
@@ -144,6 +151,9 @@ public class ServerTls {
         @Override
         public void dummyValidationForTesting (DummyValidationRequest request, StreamObserver<DummyValidationReply> responseObserver) {
             super.dummyValidationForTesting(request, responseObserver);
+            DummyValidationReply reply = DummyValidationReply.newBuilder().build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
     }
 
