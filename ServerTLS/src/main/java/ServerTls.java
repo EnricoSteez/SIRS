@@ -139,7 +139,8 @@ public class ServerTls {
 //            super.register(request, responseObserver);
             String username = request.getUsername();
             byte[] password = request.getPassword().toByteArray();
-            boolean ok = serverImpl.registerUser(username, password);
+            Role role = request.getRole();
+            boolean ok = serverImpl.registerUser(username, password, role);
             RegisterReply reply = RegisterReply.newBuilder().setOk(ok).build();
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
