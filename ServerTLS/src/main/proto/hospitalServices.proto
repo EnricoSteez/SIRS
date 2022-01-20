@@ -30,15 +30,6 @@ message HelloReply {
 }
 
 message PatientInfoRequest {
-  //  enum Role {
-  //    LAB_EMPLOYEE = 0;
-  //    DOCTOR = 1;
-  //    NURSE = 2;
-  //    PATIENT_SERVICES_ASSISTANT = 3;
-  //    CLINICAL_ASSISTANT = 4;
-  //    PORTER_VOLUNTEER = 5;
-  //    WARD_CLERK = 6;
-  //  }
   int32 patientID = 1;
   Role role = 2;
   repeated int32 selections = 3;
@@ -59,6 +50,7 @@ message MedicalRecords {
   string allergies = 7;
   repeated VisitDate visitsHistory = 8;
   bool permitted = 9;
+  int32 patientId = 10;
 }
 
 message PersonalData {

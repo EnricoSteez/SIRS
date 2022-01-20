@@ -114,11 +114,33 @@ public class Client {
         int port = Integer.parseInt(args[1]);
         ManagedChannel channel = Grpc.newChannelBuilderForAddress(host, port, tlsBuilder.build())
                 /* Only for using provided test certs. */
-                .overrideAuthority("foo.test.google.fr")
+//                .overrideAuthority("foo.test.google.fr")
                 .build();
         try {
             Client client = new Client(channel);
             client.greet(host);
+            boolean retry = true;
+            int nextOp=0;
+
+            while(retry) {
+                System.out.println("Options:");
+                System.out.println("[1] -> REGISTER NEW EMPLOYEE");
+                System.out.println("[2] -> Head to LOGIN");
+                String choice = System.console().readLine();
+                try {
+                    nextOp = Integer.parseInt(choice);
+                    if(nextOp >= 1 && nextOp <= 2)
+                        retry = false;
+                } catch (NumberFormatException e) {
+                    System.out.println(choice + "It's easy to choose, there are just two options...");
+                }
+            }
+
+            if(nextOp == 1) {
+                //TODO REGISTER
+            }
+            //ELSE PROCEED WITH LOGIN
+
 
             LoginReply.Code loginCode = LoginReply.Code.UNRECOGNIZED;
             //LOGIN ONLY ONCE, TO LOG WITH A DIFFERENT USER, JUST QUIT AND RERUN THE CLIENT FOR SIMPLICITY
