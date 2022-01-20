@@ -113,10 +113,10 @@ service XACMLService {
   rpc DummyValidationForTesting (DummyValidationRequest) returns (DummyValidationReply) {}
 }
 
-    message DummyValidationRequest {
+message DummyValidationRequest {
 
-    }
+}
 
-    message DummyValidationReply {
+message DummyValidationReply {
 
-    }
+}
