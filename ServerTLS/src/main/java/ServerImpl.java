@@ -119,7 +119,7 @@ public class ServerImpl {
     private byte[] hash(@Nullable byte[] salt, byte[] password) {
         SecureRandom random = new SecureRandom();
 
-        if(salt.equals(null)){
+        if(salt == null){
             salt = new byte[16];
             random.nextBytes(salt); //16 BYTES LONG
         }
