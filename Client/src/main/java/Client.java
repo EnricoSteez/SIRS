@@ -103,7 +103,9 @@ public class Client {
 
         RegisterReply reply = blockingStub.register(request);
         if(reply.getOk()){
-            //TODO
+            loggedUser = username;
+            //TODO get role from somewhere else?
+            userRole = request.getRole();
         }
 
         return reply.getOk();
@@ -158,31 +160,38 @@ public class Client {
 
             if(nextOp == 1) {
                 //TODO REGISTER
-                if(client.register(host)){
-                    System.out.println("Regiter successfull");
-                }else{
-                    System.out.println("Failed to register");
+                boolean sucessfullRegister = false;
+                while(!sucessfullRegister){
+                    sucessfullRegister = client.register(host);
+                    if(sucessfullRegister){
+                        System.out.println("Regiter successfull");
+                    }else{
+                        System.out.println("Failed to register");
+                    }
+                }
+
+            }else{
+                //ELSE PROCEED WITH LOGIN
+                LoginReply.Code loginCode = LoginReply.Code.UNRECOGNIZED;
+                //LOGIN ONLY ONCE, TO LOG WITH A DIFFERENT USER, JUST QUIT AND RERUN THE CLIENT FOR SIMPLICITY
+                while (!loginCode.equals(LoginReply.Code.SUCCESS)) { //REPEAT LOGIN UNTIL SUCCESSFUL
+                    loginCode = client.login(host);
+                    switch (loginCode) {
+                        case WRONGPASS:
+                            System.out.println("Incorrect Password");
+                            break;
+                        case WRONGUSER:
+                            System.out.println("You are not registered!");
+                            break;
+                        case SUCCESS:
+                            System.out.println("Welcome!!");
+                            break;
+                    }
                 }
             }
-            //ELSE PROCEED WITH LOGIN
 
 
-            LoginReply.Code loginCode = LoginReply.Code.UNRECOGNIZED;
-            //LOGIN ONLY ONCE, TO LOG WITH A DIFFERENT USER, JUST QUIT AND RERUN THE CLIENT FOR SIMPLICITY
-            while (!loginCode.equals(LoginReply.Code.SUCCESS)) { //REPEAT LOGIN UNTIL SUCCESSFUL
-                loginCode = client.login(host);
-                switch (loginCode) {
-                    case WRONGPASS:
-                        System.out.println("Incorrect Password");
-                        break;
-                    case WRONGUSER:
-                        System.out.println("You are not registered!");
-                        break;
-                    case SUCCESS:
-                        System.out.println("Welcome!!");
-                        break;
-                }
-            }
+
             //AFTER SUCCESSFUL LOGIN, A USER INTERACTION LOOP STARTS UNTIL LOGOUT
             System.out.println("Insert PatientID to retrieve info, -1 to logout");
             int id;
