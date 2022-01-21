@@ -149,10 +149,13 @@ public class Client {
                 switch (loginCode) {
                     case WRONGPASS:
                         System.out.println("Incorrect Password");
-                    case UNRECOGNIZED:
+                        break;
+                    case WRONGUSER:
                         System.out.println("You are not registered!");
+                        break;
                     case SUCCESS:
                         System.out.println("Welcome!!");
+                        break;
                 }
             }
             //AFTER SUCCESSFUL LOGIN, A USER INTERACTION LOOP STARTS UNTIL LOGOUT

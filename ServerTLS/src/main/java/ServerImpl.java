@@ -23,7 +23,7 @@ public class ServerImpl {
         try{
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/SIRS","sirs","sirs");
+                "jdbc:mysql://localhost:3306/main","root","ga38");
         } catch (ClassNotFoundException|SQLException e) {
             e.printStackTrace();
         }
@@ -42,6 +42,7 @@ public class ServerImpl {
         //length of the stored password: saltLength + hashlength
         try {
             statement = con.prepareStatement("SELECT password FROM Users WHERE username=?");
+            statement.setString(1,username);
             res = statement.executeQuery();
             if(res.next()) {
                 saltPlusHashBlob = res.getBlob("password");
@@ -56,13 +57,13 @@ public class ServerImpl {
 
                 byte[] userHash = hash(salt,password);
 
-                if(Arrays.equals(databaseHash, userHash))
+                if(Arrays.equals(databaseHash, userHash)) {
                     return LoginReply.Code.SUCCESS;
-                else
+                }else {
                     return LoginReply.Code.WRONGPASS;
-
+                }
             } else {
-                return LoginReply.Code.UNRECOGNIZED;
+                return LoginReply.Code.WRONGUSER;
             }
 
         } catch (SQLException e) {
