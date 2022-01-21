@@ -1,4 +1,3 @@
-import com.google.api.SystemParameterOrBuilder;
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import io.grpc.Grpc;
@@ -31,6 +30,7 @@ public class Client {
      */
     public Client(Channel channel) {
         blockingStub = HospitalServiceGrpc.newBlockingStub(channel);
+        logger.setLevel(Level.FINEST);
     }
 
     /**
@@ -58,9 +58,9 @@ public class Client {
      *
      * @return {@code 0} if login is successful;
      * {@code -1} otherwise
-     * @param host is the IP of the server
      */
-    private LoginReply.Code login (String host) {
+    private LoginReply.Code login () {
+        System.out.println("------------------------------LOGIN TO PROCEED------------------------------");
         System.out.println("Username:");
         String username = System.console().readLine();
         System.out.println("Password:");
@@ -90,25 +90,35 @@ public class Client {
         return reply.getRecords();
     }
 
-    private boolean register(String host){
-        System.out.println("Username:");
-        String username = System.console().readLine();
-        System.out.println("Password:");
-        char[] password = System.console().readPassword();
-        RegisterRequest request = RegisterRequest.newBuilder()
-                .setUsername(username)
-                .setPassword(ByteString.copyFrom(toBytes(password)))
-                .setRole(Role.DOCTOR)
-                .build();
+    private void register (){
+        boolean successfulRegister = false;
 
-        RegisterReply reply = blockingStub.register(request);
-        if(reply.getOk()){
-            loggedUser = username;
-            //TODO get role from somewhere else?
-            userRole = request.getRole();
+        while(!successfulRegister) {
+            System.out.println("------------------------------REGISTRATION PHASE------------------------------");
+
+            System.out.println("Username:");
+            String username = System.console().readLine();
+            System.out.println("Password:");
+            char[] password = System.console().readPassword();
+            byte[] passwordBytes = toBytes(password);
+            System.err.println("Byte converted password: " + Arrays.toString(passwordBytes));
+            RegisterRequest request = RegisterRequest.newBuilder()
+                    .setUsername(username)
+                    .setPassword(ByteString.copyFrom(passwordBytes))
+                    .setRole(Role.DOCTOR)
+                    .build();
+            System.err.println("Register Request is: " + username + " ~ " + Arrays.toString(password) + " ~ " + Role.DOCTOR);
+            RegisterReply reply = blockingStub.register(request);
+
+            successfulRegister = reply.getOk();
+
+            if (successfulRegister) {
+                loggedUser = username;
+                //TODO get role from somewhere else?
+                userRole = request.getRole();
+            }
+
         }
-
-        return reply.getOk();
     }
 
     public static void main(String[] args) throws Exception {
@@ -151,46 +161,33 @@ public class Client {
                 String choice = System.console().readLine();
                 try {
                     nextOp = Integer.parseInt(choice);
-                    if(nextOp >= 1 && nextOp <= 2)
+                    if(nextOp == 1 || nextOp == 2)
                         retry = false;
                 } catch (NumberFormatException e) {
                     System.out.println(choice + "It's easy to choose, there are just two options...");
                 }
             }
 
-            if(nextOp == 1) {
-                //TODO REGISTER
-                boolean sucessfullRegister = false;
-                while(!sucessfullRegister){
-                    sucessfullRegister = client.register(host);
-                    if(sucessfullRegister){
-                        System.out.println("Regiter successfull");
-                    }else{
-                        System.out.println("Failed to register");
-                    }
-                }
+            if(nextOp == 1)
+                client.register();
 
-            }else{
-                //ELSE PROCEED WITH LOGIN
-                LoginReply.Code loginCode = LoginReply.Code.UNRECOGNIZED;
-                //LOGIN ONLY ONCE, TO LOG WITH A DIFFERENT USER, JUST QUIT AND RERUN THE CLIENT FOR SIMPLICITY
-                while (!loginCode.equals(LoginReply.Code.SUCCESS)) { //REPEAT LOGIN UNTIL SUCCESSFUL
-                    loginCode = client.login(host);
-                    switch (loginCode) {
-                        case WRONGPASS:
-                            System.out.println("Incorrect Password");
-                            break;
-                        case WRONGUSER:
-                            System.out.println("You are not registered!");
-                            break;
-                        case SUCCESS:
-                            System.out.println("Welcome!!");
-                            break;
-                    }
+            //PROCEED WITH LOGIN ANYWAYS
+            LoginReply.Code loginCode = LoginReply.Code.UNRECOGNIZED;
+            //LOGIN ONLY ONCE, TO LOG WITH A DIFFERENT USER, JUST QUIT AND RERUN THE CLIENT FOR SIMPLICITY
+            while (!loginCode.equals(LoginReply.Code.SUCCESS)) { //REPEAT LOGIN UNTIL SUCCESSFUL
+                loginCode = client.login();
+                switch (loginCode) {
+                    case WRONGPASS:
+                        System.out.println("Incorrect Password");
+                        break;
+                    case WRONGUSER:
+                        System.out.println("You are not registered!");
+                        break;
+                    case SUCCESS:
+                        System.out.println("Welcome!!");
+                        break;
                 }
             }
-
-
 
             //AFTER SUCCESSFUL LOGIN, A USER INTERACTION LOOP STARTS UNTIL LOGOUT
             System.out.println("Insert PatientID to retrieve info, -1 to logout");
@@ -218,7 +215,7 @@ public class Client {
                     System.out.println("[6] -> Allergies");
                     System.out.println("[7] -> Past visits history");
                     System.out.println("[8] -> Complete Medical Records");
-                    System.out.println("Insert either a list of selections or 8, followd by ENTER.\nDo not insert 8 along with other selections, please:");
+                    System.out.println("Insert either a list of selections or 8, followed by ENTER.\nDo not insert 8 along with other selections, please:");
                     String selections = System.console().readLine();
                     StringTokenizer tokenizer = new StringTokenizer(selections);
 
@@ -230,7 +227,7 @@ public class Client {
                                 selectedNumbers.add(oneSelection);
                             } catch (Exception badSelectionFormat) {
                                 legalSelections = false;
-                                System.out.println("'" + token + "' is not a valid selction! Select again...");
+                                System.out.println("'" + token + "' is not a valid selection! Select again...");
                             }
                         }
                     } else { // NO SELECTIONS

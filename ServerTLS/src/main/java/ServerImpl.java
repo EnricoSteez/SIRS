@@ -1,6 +1,5 @@
 import com.google.protobuf.ByteString;
 
-import javax.annotation.Nullable;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
@@ -23,9 +22,12 @@ public class ServerImpl {
         try{
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/main","root","ga38");
+                "jdbc:mysql://localhost:3306/sirs","root",null);
+            // sirs is the database name, root is the user and last parameter is the password: use null if no password is set!!
         } catch (ClassNotFoundException|SQLException e) {
+            System.err.println("ERROR CONNECTING TO THE DATABASE, CHECK THE DRIVEMANAGER.GETCONNECTION PARAMETERS");
             e.printStackTrace();
+            System.exit(0);
         }
     }
     public String sayHello (String name) {
@@ -33,30 +35,39 @@ public class ServerImpl {
     }
 
     public LoginReply.Code tryLogin (String username, ByteString passwordBytes) {
-
         PreparedStatement statement = null;
         ResultSet res = null;
         Blob saltPlusHashBlob = null;
         int saltLength = 16;
-        int hashlength = 128;
+        int hashLength = 16;
         //length of the stored password: saltLength + hashlength
         try {
             statement = con.prepareStatement("SELECT password FROM Users WHERE username=?");
             statement.setString(1,username);
             res = statement.executeQuery();
             if(res.next()) {
+                //------------------------------ RETRIEVE STORED PASSWORD ------------------------------
                 saltPlusHashBlob = res.getBlob("password");
-                byte[] saltPlusHash = saltPlusHashBlob.getBytes(1,saltLength);
+                byte[] saltPlusHash = saltPlusHashBlob.getBytes(1,saltLength+hashLength);
+                System.err.println("LOGGING IN User: " + username);
+                System.err.println("UserPass: " + Arrays.toString(passwordBytes.toByteArray()));
 
-                byte[] salt = new byte[128];
-                byte[] databaseHash = new byte[128];
-                System.arraycopy(saltPlusHash,0,salt,0,saltLength); //EXTRACT FIRST 6 BYTES: SALT
-                System.arraycopy(saltPlusHash,6,databaseHash,0,hashlength); //REMAINING 128 BYTES: HASH
+                System.err.println("Retrieved salt plus hash: " + Arrays.toString(saltPlusHash));
 
+                //------------------------------ SEPARATE SALT AND HASH ------------------------------
+                byte[] salt = new byte[16];
+                byte[] databaseHash = new byte[16];
+                System.arraycopy(saltPlusHash,0,salt,0,saltLength); //EXTRACT FIRST 16 BYTES: SALT
+                System.err.println("Extracted salt: " + Arrays.toString(salt));
+                System.arraycopy(saltPlusHash,16,databaseHash,0,hashLength); //REMAINING 16 BYTES: HASH
+                System.err.println("Extracted hash: " + Arrays.toString(databaseHash));
+
+                //----------------------- HASH THE USER PASSWORD WITH THE DATABASE RETRIEVED SALT ---------------------
                 byte[] password = passwordBytes.toByteArray();
-
                 byte[] userHash = hash(salt,password);
+                System.err.println("UserPass hashed with Database Salt: " + Arrays.toString(userHash));
 
+                //------------------------------ CHECK FOR MATCH ------------------------------
                 if(Arrays.equals(databaseHash, userHash)) {
                     return LoginReply.Code.SUCCESS;
                 }else {
@@ -65,7 +76,6 @@ public class ServerImpl {
             } else {
                 return LoginReply.Code.WRONGUSER;
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -97,46 +107,73 @@ public class ServerImpl {
     }
 
     public boolean registerUser (String username, byte[] password, Role role) {
-        byte[] recordToStore = hash(null,password);
 
+        //------------------------------ CHECK IF USERNAME ALREADY EXISTS ------------------------------
+        try {
+            PreparedStatement statement = con.prepareStatement("SELECT * from Users WHERE Username = ?");
+            statement.setString(1,username);
+            ResultSet res = statement.executeQuery();
+
+            if(res.next())
+                return false;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        //------------------------------ GENERATE SALT ------------------------------
+        SecureRandom random = new SecureRandom();
+        byte[] salt = new byte[16];
+        random.nextBytes(salt); //16 BYTES LONG
+
+        //------------------------------ HASH ------------------------------
+        byte[] passHash = hash(salt,password);
+        if(passHash == null)
+        {
+            System.err.println("Failed to hash password " + Arrays.toString(password) + " with salt " + Arrays.toString(salt));
+            return false;
+        }
+
+        //------------------------------ PREPEND ------------------------------
+        byte[] recordToStore = new byte[passHash.length + salt.length];
+        System.arraycopy(salt,0,recordToStore,0,salt.length);
+        System.arraycopy(passHash,0,recordToStore,salt.length, passHash.length);
+
+        System.err.println("After prepending the salt to the hash, the final record is: " + Arrays.toString(recordToStore));
+
+        //------------------------------ STORE ------------------------------
         try {
             Blob blob = con.createBlob();
             blob.setBytes(1,recordToStore);
             PreparedStatement statement = con.prepareStatement("INSERT INTO Users (Username, Password, Role) VALUES (?,?,?)");
             statement.setString(1,username);
             statement.setBlob(2,blob);
-            statement.setInt(3, role.getNumber() + 1);
-            System.out.println("Registering User: " + username +
-                    " with password: " + Arrays.toString(convertToCharArray(blob.getBytes(1, password.length))) +
+            statement.setString(3, role.name());
+
+            System.err.println("Registering User: " + username +
+                    " with passwordBytes: " + Arrays.toString(password) +
+                    " maps to plaintext: " + Arrays.toString(convertToCharArray(password)) +
                     ". ROLE: " + role.name());
-            statement.executeUpdate();
-            return true;
+
+            System.err.println("The hashed password I will store is: " + Arrays.toString(blob.getBytes(1, recordToStore.length)));
+
+            if(statement.executeUpdate() == 1)
+                return true;
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    private byte[] hash(@Nullable byte[] salt, byte[] password) {
-        SecureRandom random = new SecureRandom();
-
-        if(salt == null){
-            salt = new byte[16];
-            random.nextBytes(salt); //16 BYTES LONG
-        }
+    private byte[] hash(byte[] salt, byte[] password) {
         char[] passCharArray = convertToCharArray(password);
+//        System.err.println("The plaintext password is: " + Arrays.toString(passCharArray));
         KeySpec spec = new PBEKeySpec(passCharArray, salt, 65536, 128);
-        byte[] hash;
-        SecretKeyFactory factory;
         try {
-            factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-            hash = factory.generateSecret(spec).getEncoded(); //128 BYTES LONG
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
             //prepend salt to the generated hash
-            byte[] recordToStore = new byte[hash.length + salt.length];
-            System.arraycopy(salt,0,recordToStore,0,salt.length);
-            System.arraycopy(hash,0,recordToStore,salt.length, hash.length);
-
-            return recordToStore;
+//            System.err.println("The generated hash is: " + Arrays.toString(hash));
+            return factory.generateSecret(spec).getEncoded();
         } catch(NoSuchAlgorithmException | InvalidKeySpecException e){
             e.printStackTrace();
         }

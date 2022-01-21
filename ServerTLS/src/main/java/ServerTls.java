@@ -13,6 +13,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -39,6 +41,7 @@ public class ServerTls {
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
+        logger.setLevel(Level.FINEST);
 
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -139,7 +142,9 @@ public class ServerTls {
 //            super.register(request, responseObserver);
             String username = request.getUsername();
             byte[] password = request.getPassword().toByteArray();
+            System.err.println("Received password byte[]: " + Arrays.toString(password));
             Role role = request.getRole();
+            System.err.println("Received Register Request with: " + username + " ~ " + Arrays.toString(password) + " ~ " + Role.DOCTOR);
             boolean ok = serverImpl.registerUser(username, password, role);
             RegisterReply reply = RegisterReply.newBuilder().setOk(ok).build();
             responseObserver.onNext(reply);

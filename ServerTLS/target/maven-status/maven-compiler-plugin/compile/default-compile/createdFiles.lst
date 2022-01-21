@@ -63,6 +63,7 @@ MedicalRecords.class
 RegisterRequest$Builder.class
 HospitalServiceGrpc$1.class
 PatientInfoRequest$Builder.class
+RSAOperations.class
 Constants.class
 DummyValidationRequest.class
 XACMLServiceGrpc.class
