@@ -5,6 +5,7 @@ service HospitalService {
   rpc SayHello (HelloRequest) returns (HelloReply) {}
   rpc RetrievePatientInfo (PatientInfoRequest) returns (PatientInfoReply) {}
   rpc Login(LoginRequest) returns (LoginReply) {}
+  rpc Register(RegisterRequest) returns (RegisterReply) {}
 }
 enum Role {
   LAB_EMPLOYEE = 0;

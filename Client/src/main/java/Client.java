@@ -1,3 +1,4 @@
+import com.google.api.SystemParameterOrBuilder;
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import io.grpc.Grpc;
@@ -79,6 +80,8 @@ public class Client {
         return reply.getCode();
     }
 
+
+
     private MedicalRecords retrievePatientInfo (int id, List<Integer> selectedNumbers) {
         PatientInfoRequest request = PatientInfoRequest.newBuilder()
                 .setPatientID(id)
@@ -87,7 +90,24 @@ public class Client {
         return reply.getRecords();
     }
 
+    private boolean register(String host){
+        System.out.println("Username:");
+        String username = System.console().readLine();
+        System.out.println("Password:");
+        char[] password = System.console().readPassword();
+        RegisterRequest request = RegisterRequest.newBuilder()
+                .setUsername(username)
+                .setPassword(ByteString.copyFrom(toBytes(password)))
+                .setRole(Role.DOCTOR)
+                .build();
 
+        RegisterReply reply = blockingStub.register(request);
+        if(reply.getOk()){
+            //TODO
+        }
+
+        return reply.getOk();
+    }
 
     public static void main(String[] args) throws Exception {
 
@@ -138,6 +158,11 @@ public class Client {
 
             if(nextOp == 1) {
                 //TODO REGISTER
+                if(client.register(host)){
+                    System.out.println("Regiter successfull");
+                }else{
+                    System.out.println("Failed to register");
+                }
             }
             //ELSE PROCEED WITH LOGIN
 

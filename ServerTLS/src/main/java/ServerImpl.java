@@ -46,7 +46,7 @@ public class ServerImpl {
             res = statement.executeQuery();
             if(res.next()) {
                 saltPlusHashBlob = res.getBlob("password");
-                byte[] saltPlusHash = saltPlusHashBlob.getBytes(0,saltLength);
+                byte[] saltPlusHash = saltPlusHashBlob.getBytes(1,saltLength);
 
                 byte[] salt = new byte[128];
                 byte[] databaseHash = new byte[128];
@@ -101,13 +101,13 @@ public class ServerImpl {
 
         try {
             Blob blob = con.createBlob();
-            blob.setBytes(0,recordToStore);
+            blob.setBytes(1,recordToStore);
             PreparedStatement statement = con.prepareStatement("INSERT INTO Users (Username, Password, Role) VALUES (?,?,?)");
             statement.setString(1,username);
             statement.setBlob(2,blob);
-            statement.setString(3, role.name());
+            statement.setInt(3, role.getNumber() + 1);
             System.out.println("Registering User: " + username +
-                    " with password: " + Arrays.toString(convertToCharArray(blob.getBytes(0, password.length))) +
+                    " with password: " + Arrays.toString(convertToCharArray(blob.getBytes(1, password.length))) +
                     ". ROLE: " + role.name());
             statement.executeUpdate();
             return true;
