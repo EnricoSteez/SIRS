@@ -99,7 +99,7 @@ public class ServerTls {
 
     //check permission policy and eventually delegate data retrieval to implementation class
     static class HospitalService extends HospitalServiceGrpc.HospitalServiceImplBase {
-        private final ServerImpl serverImpl = new ServerImpl();
+        private final ServerImpl serverImpl = ServerImpl.getInstance();
 
         //this is a general template to define a method
         //parse request, delegate to implementation and send response
@@ -154,12 +154,20 @@ public class ServerTls {
     }
 
     static class XACMLService extends XACMLServiceGrpc.XACMLServiceImplBase {
+        private final ServerImpl serverImpl = ServerImpl.getInstance();
+
         @Override
         public void dummyValidationForTesting (DummyValidationRequest request, StreamObserver<DummyValidationReply> responseObserver) {
-            super.dummyValidationForTesting(request, responseObserver);
+//            super.dummyValidationForTesting(request, responseObserver);
             DummyValidationReply reply = DummyValidationReply.newBuilder().build();
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
+        }
+
+        @Override
+        public void validateAccess (AccessControlRequest request, StreamObserver<AccessControlReply> responseObserver) {
+//            super.validateAccess(request, responseObserver);
+
         }
     }
 

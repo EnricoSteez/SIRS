@@ -80,8 +80,6 @@ public class Client {
         return reply.getCode();
     }
 
-
-
     private MedicalRecords retrievePatientInfo (int id, List<Integer> selectedNumbers) {
         PatientInfoRequest request = PatientInfoRequest.newBuilder()
                 .setPatientID(id)

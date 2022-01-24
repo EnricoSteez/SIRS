@@ -17,8 +17,15 @@ import java.util.List;
  */
 public class ServerImpl {
     private Connection con;
+    private static ServerImpl instance = null;
 
-    public ServerImpl(){
+    public static ServerImpl getInstance () {
+        if(instance == null)
+            instance = new ServerImpl();
+        return instance;
+    }
+
+    private ServerImpl(){
         try{
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
