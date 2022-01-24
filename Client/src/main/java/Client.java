@@ -23,7 +23,7 @@ public class Client {
     private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
 
     private static Role userRole = null;
-    private static String loggedUser = null;
+//    private static String loggedUser = null;
 
     /**
      * Construct client for accessing RouteGuide server using the existing channel.
@@ -74,7 +74,7 @@ public class Client {
 
         if(reply.getCode() == LoginReply.Code.SUCCESS) {
             userRole = reply.getRole();
-            loggedUser = username;
+//            loggedUser = username;
         }
 
         return reply.getCode();
@@ -111,7 +111,7 @@ public class Client {
             successfulRegister = reply.getOk();
 
             if (successfulRegister) {
-                loggedUser = username;
+//                loggedUser = username;
                 //TODO get role from somewhere else?
                 userRole = request.getRole();
             }

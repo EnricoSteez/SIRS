@@ -1,0 +1,25 @@
+syntax = "proto3";
+option java_multiple_files = true;
+
+//services for XACML permission validation
+//interaction between application server (PEP) and PDP
+service AccessControlService {
+  rpc DummyValidationForTesting (DummyValidationRequest) returns (DummyValidationReply) {}
+  rpc ValidateAccess (AccessControlRequest) returns (AccessControlReply);
+}
+
+message DummyValidationRequest {
+
+}
+
+message DummyValidationReply {
+
+}
+
+message AccessControlRequest {
+  string xacmlRequest = 1;
+}
+
+message AccessControlReply {
+  string xacmlReply = 2;
+}
