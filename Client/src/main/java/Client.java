@@ -75,17 +75,30 @@ public class Client {
         if(reply.getCode() == LoginReply.Code.SUCCESS) {
             userRole = reply.getRole();
 //            loggedUser = username;
+            String userID = reply.getUserId();
         }
 
         return reply.getCode();
     }
 
-    private MedicalRecords retrievePatientInfo (int id, List<Integer> selectedNumbers) {
-        PatientInfoRequest request = PatientInfoRequest.newBuilder()
+    private PatientInfoReply retrievePatientInfo (int id, List<Integer> selectedNumbers) {
+
+        System.err.println("About to send request for Patient info containing:");
+        System.err.println("Patient ID:" + id);
+        System.err.println("My ROLE:" + userRole);
+        System.err.println("Selections:" + Arrays.toString(selectedNumbers.toArray()));
+
+        PatientInfoRequest.Builder request = PatientInfoRequest.newBuilder()
                 .setPatientID(id)
-                .setRole(userRole).build();
-        PatientInfoReply reply = blockingStub.retrievePatientInfo(request);
-        return reply.getRecords();
+                .setRole(userRole)
+                .addAllSelections(selectedNumbers);
+
+//        for(int i = 0 ; i < selectedNumbers.size() ; i++) {
+//            request.setSelections(i+1, selectedNumbers.get(i));
+//        }
+
+        PatientInfoReply reply = blockingStub.retrievePatientInfo(request.build());
+        return reply;
     }
 
     private void register (){
@@ -262,9 +275,14 @@ public class Client {
                             try {
                                 int oneSelection = Integer.parseInt(token);
                                 selectedNumbers.add(oneSelection);
-                            } catch (Exception badSelectionFormat) {
+                            } catch (Exception e) {
+                                e.printStackTrace();
                                 legalSelections = false;
                                 System.out.println("'" + token + "' is not a valid selection! Select again...");
+                            }
+                            if(selectedNumbers.contains(8) && selectedNumbers.size()>1){
+                                System.out.println("If you select more than a number, the selections must not include 8!");
+                                legalSelections=false;
                             }
                         }
                     } else { // NO SELECTIONS
@@ -272,8 +290,13 @@ public class Client {
                         legalSelections = false;
                     }
                     //EVENTUALLY THE USER WILL SELECT SOMETHING VALID, THE REQUEST TO THE SERVER IS THEN MADE
-                    MedicalRecords patientRecords = client.retrievePatientInfo(id, selectedNumbers);
-                    client.printRecords(patientRecords);
+                    PatientInfoReply reply = client.retrievePatientInfo(id, selectedNumbers);
+                    if(reply.getPermission())
+                        client.printRecords(reply.getRecords());
+                    else {
+                        System.out.println("PERMISSION DENIED");
+                        System.out.println(reply.getPdpAdvice());
+                    }
                 }
                 System.out.println("Insert another PatientID to retrieve info, -1 to logout");
                 try {
@@ -297,6 +320,8 @@ public class Client {
     }
 
     private void printRecords(MedicalRecords records){
+        System.out.println("Received Medical Records:");
+
         StringBuilder builder = new StringBuilder();
         for(Object o : records.getAllFields().values()){
             builder.append(o.toString());

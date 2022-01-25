@@ -2,6 +2,7 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import org.wso2.balana.Balana;
+import org.wso2.balana.PDP;
 import org.wso2.balana.finder.impl.FileBasedPolicyFinderModule;
 
 import java.io.File;
@@ -16,15 +17,17 @@ public class PDPServer {
     private final int port;
     private Server server;
     private static Balana balana;
-    private static int operationMode;
+    private static PDP pdp;
+
 
     public PDPServer(int port) {
         this.port = port;
         initBalana();
+        pdp = getPDPNewInstance();
     }
 
-    private static void initBalana(){
-        try{
+    private static void initBalana() {
+        try {
             // using file based policy repository. so set the policy location as system property
             String policyLocation = (new File(".")).getCanonicalPath() + File.separator + "resources";
             System.setProperty(FileBasedPolicyFinderModule.POLICY_DIR_PROPERTY, policyLocation);
@@ -35,10 +38,28 @@ public class PDPServer {
         balana = Balana.getInstance();
     }
 
+    /**
+     * Returns a new PDP instance with new XACML policies
+     *
+     * @return a  PDP instance
+     */
+    private static PDP getPDPNewInstance(){
+//        PDPConfig pdpConfig = balana.getPdpConfig();
+//        // registering new attribute finder. so default PDPConfig is needed to change
+//        AttributeFinder attributeFinder = pdpConfig.getAttributeFinder();
+//        List<AttributeFinderModule> finderModules = attributeFinder.getModules();
+//        finderModules.add(new MedicalRecordsAttributeFinderModule());
+//        attributeFinder.setModules(finderModules);
+//        return new PDP(new PDPConfig(attributeFinder, pdpConfig.getPolicyFinder(), null, true));
+//
+//        I THINK THAT DEFAULT CONFIG IS FINE IN THIS CASE (???)
+        return new PDP(balana.getPdpConfig());
+    }
+
     /** Start serving requests. */
     private void start () throws IOException {
         server = ServerBuilder.forPort(port)
-//                .addService(new XACMLService())
+                .addService(new AccessControlService())
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
@@ -65,21 +86,13 @@ public class PDPServer {
      * Main method.  This comment makes the linter happy.
      */
     public static void main(String[] args) throws Exception {
-
-        if (args.length == 0) {
-            System.out.println(
-                    "USAGE: PDPServer policyFilePath");
-            System.exit(0);
-        }
-
         final PDPServer server = new PDPServer(8980);
 
-        int operationMode = Integer.parseInt(args[1]);
         server.start();
         server.blockUntilShutdown();
     }
 
-    static class AccessControl extends AccessControlServiceGrpc.AccessControlServiceImplBase {
+    static class AccessControlService extends AccessControlServiceGrpc.AccessControlServiceImplBase {
         @Override
         public void dummyValidationForTesting (DummyValidationRequest request, StreamObserver<DummyValidationReply> responseObserver) {
 //            super.dummyValidationForTesting(request, responseObserver);
@@ -91,7 +104,13 @@ public class PDPServer {
         @Override
         public void validateAccess (AccessControlRequest request, StreamObserver<AccessControlReply> responseObserver) {
 //            super.validateAccess(request, responseObserver);
+            String evaluation = pdp.evaluate(request.getXacmlRequest());
+            System.out.println("EVALUATED REQUEST. OUTCOME: ");
+            System.out.println(evaluation);
+            AccessControlReply reply = AccessControlReply.newBuilder().setXacmlReply(evaluation).build();
 
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
     }
 

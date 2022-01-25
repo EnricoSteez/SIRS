@@ -83,11 +83,11 @@ public class ServerTls {
         TlsServerCredentials.Builder tlsBuilder = TlsServerCredentials.newBuilder()
                 .keyManager(new File(args[1]), new File(args[2]));
 
-        tlsBuilder.trustManager(new File(args[3]));
-        tlsBuilder.clientAuth(TlsServerCredentials.ClientAuth.REQUIRE);
+//        tlsBuilder.trustManager(new File(args[3]));
+//        tlsBuilder.clientAuth(TlsServerCredentials.ClientAuth.REQUIRE);
 
         final ServerTls server = new ServerTls(
-                Integer.parseInt(args[0]), tlsBuilder.build(), args[4]);
+                Integer.parseInt(args[0]), tlsBuilder.build(), args[3]);
 
         server.start();
         server.blockUntilShutdown();
@@ -117,8 +117,7 @@ public class ServerTls {
         @Override
         public void login (LoginRequest request, StreamObserver<LoginReply> responseObserver) {
 //            super.login(request, responseObserver);
-            LoginReply.Code code = serverImpl.tryLogin(request.getUsername(), request.getPassword());
-            LoginReply reply = LoginReply.newBuilder().setCode(code).build();
+            LoginReply reply = serverImpl.login(request.getUsername(), request.getPassword());
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
         }

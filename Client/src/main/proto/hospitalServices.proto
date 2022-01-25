@@ -34,9 +34,10 @@ message PatientInfoRequest {
   repeated int32 selections = 3;
 }
 message PatientInfoReply {
-  oneof info {
+  bool permission = 2;
+  oneof result {
     MedicalRecords records = 1;
-    string permissionDenied = 2;
+    string pdpAdvice = 3;
   }
 }
 
@@ -86,6 +87,7 @@ message LoginReply {
 //  }
   Code code = 1;
   Role role = 2;
+  string userId = 3;
 }
 
 
