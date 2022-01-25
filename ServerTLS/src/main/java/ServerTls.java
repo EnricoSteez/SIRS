@@ -113,8 +113,7 @@ public class ServerTls {
         @Override
         public void login (LoginRequest request, StreamObserver<LoginReply> responseObserver) {
 //            super.login(request, responseObserver);
-            LoginReply.Code code = serverImpl.tryLogin(request.getUsername(), request.getPassword());
-            LoginReply reply = LoginReply.newBuilder().setCode(code).build();
+            LoginReply reply = serverImpl.login(request.getUsername(), request.getPassword());
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
         }

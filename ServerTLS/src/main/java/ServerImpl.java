@@ -1,12 +1,9 @@
 import com.google.protobuf.ByteString;
-import io.grpc.Channel;
-import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -22,10 +19,8 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.sql.*;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.Date;
 
 /**
  * ServerImpl is a class that implements data retrieval methods (APIs)
@@ -88,12 +83,14 @@ public class ServerImpl {
         return "Ciao " + name;
     }
 
-    public LoginReply.Code tryLogin (String username, ByteString passwordBytes) {
+    public LoginReply login (String username, ByteString passwordBytes) {
         PreparedStatement statement = null;
         ResultSet res = null;
         Blob saltPlusHashBlob = null;
         int saltLength = 16;
         int hashLength = 16;
+        LoginReply.Builder reply = LoginReply.newBuilder();
+
         //length of the stored password: saltLength (16B) + hashlength (16B)
         try {
             statement = con.prepareStatement("SELECT password FROM Users WHERE username=?");
@@ -123,12 +120,18 @@ public class ServerImpl {
 
                 //------------------------------ CHECK FOR MATCH ------------------------------
                 if(Arrays.equals(databaseHash, userHash)) {
-                    return LoginReply.Code.SUCCESS;
+                    statement = con.prepareStatement("SELECT Role FROM Users WHERE username=?");
+                    statement.setString(1,username);
+                    res = statement.executeQuery();
+                    res.next();
+                    Role role = Role.valueOf(res.getString("Role"));
+                    reply.setCode(LoginReply.Code.SUCCESS)
+                            .setRole(role);
                 }else {
-                    return LoginReply.Code.WRONGPASS;
+                    reply.setCode(LoginReply.Code.WRONGPASS);
                 }
             } else {
-                return LoginReply.Code.WRONGUSER;
+                reply.setCode(LoginReply.Code.WRONGUSER);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -137,7 +140,7 @@ public class ServerImpl {
         //here SIRS is database name, sirs is username and password
         //TODO @Daniel PLEASE figure out how to connect with SSL (if you need to add anything to the code)
 
-        return LoginReply.Code.SUCCESS;
+        return reply.build();
     }
 
     public PatientInfoReply retrievePatientInfo (int patientID, Role whoami, List<Integer> selectionsList) {
@@ -304,40 +307,34 @@ public class ServerImpl {
     }
 
     private String createRequestString (Role whoami, List<Integer> selectionsList, String action) {
-        StringBuilder request = new StringBuilder(  "<Request xmlns=\"urn:oasis:names:tc:xacml:3.0:schema:os\"\n" +
-                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                "xsi:schemaLocation=\"urn:oasis:names:tc:xacml:3.0:schema:os http://docs.oasis-open.org/xacml/FIXME.xsd\">\n" +
+        StringBuilder request = new StringBuilder(
+                "<Request xmlns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\" CombinedDecision=\"false\" ReturnPolicyIdList=\"false\">" +
                 "     <Attributes Category=\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\">\n" +
-                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:subject:subject-id\">\n" +
-                "               <AttributeValue DataType=\"urn:oasis:names:tc:xacml:1.0:data-type:rfc822Name\">" + whoami + "</AttributeValue>\n" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:subject:subject-id\" IncludeInResult=\"false\">\n" +
+                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + whoami + "</AttributeValue>\n" +
                 "          </Attribute>\n" +
                 "     </Attributes>\n");
         if(selectionsList.get(0) == 8) { //PUT ALL FIELDS
             for(String field : MedicalRecordContent.values()) {
                 request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
-                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n" +
-                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#anyURI\">" + field + "</AttributeValue>\n" +
+                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">\n" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + field + "</AttributeValue>\n" +
                         "          </Attribute>\n" +
                         "     </Attributes>\n");
             }
         }
-        else { //ONLY NAME SURNAME PLUS SELECTIONS
-            request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
-                    "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n" +
-                    "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#anyURI\"> NameSurname </AttributeValue>\n" +
-                    "          </Attribute>\n" +
-                    "     </Attributes>\n");
+        else {
             for (int info : selectionsList) {
                 request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
-                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n" +
-                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#anyURI\">" + MedicalRecordContent.get(info) + "</AttributeValue>\n" +
+                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">\n" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + MedicalRecordContent.get(info) + "</AttributeValue>\n" +
                         "          </Attribute>\n" +
                         "     </Attributes>\n");
             }
         }
 
         request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\">\n" +
-                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\">\n" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\" IncludeInResult=\"false\">\n" +
                 "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + action + "</AttributeValue>\n" +
                 "          </Attribute>\n" +
                 "     </Attributes>\n" +

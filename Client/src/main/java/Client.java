@@ -81,18 +81,21 @@ public class Client {
     }
 
     private PatientInfoReply retrievePatientInfo (int id, List<Integer> selectedNumbers) {
-        PatientInfoRequest.Builder request = PatientInfoRequest.newBuilder()
-                .setPatientID(id)
-                .setRole(userRole);
-
-        for(int i = 0 ; i < selectedNumbers.size() ; i++) {
-            request.setSelections(i, selectedNumbers.get(i));
-        }
 
         System.err.println("About to send request for Patient info containing:");
         System.err.println("Patient ID:" + id);
         System.err.println("My ROLE:" + userRole);
         System.err.println("Selections:" + Arrays.toString(selectedNumbers.toArray()));
+
+        PatientInfoRequest.Builder request = PatientInfoRequest.newBuilder()
+                .setPatientID(id)
+                .setRole(userRole);
+
+        request.addAllSelections(selectedNumbers);
+
+//        for(int i = 0 ; i < selectedNumbers.size() ; i++) {
+//            request.setSelections(i+1, selectedNumbers.get(i));
+//        }
 
         PatientInfoReply reply = blockingStub.retrievePatientInfo(request.build());
         return reply;

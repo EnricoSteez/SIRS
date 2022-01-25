@@ -86,7 +86,6 @@ public class PDPServer {
      * Main method.  This comment makes the linter happy.
      */
     public static void main(String[] args) throws Exception {
-
         final PDPServer server = new PDPServer(8980);
 
         server.start();
