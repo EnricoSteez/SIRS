@@ -47,6 +47,7 @@ public class ServerImpl {
 
     private ServerImpl(String target){
         //THIS IS JUST A MAPPING FOR THE USER SELECTION TO PUT IN THE PDP REQUEST
+        MedicalRecordContent.put(1,"NameSurname");
         MedicalRecordContent.put(2,"PersonalData");
         MedicalRecordContent.put(3,"Problems");
         MedicalRecordContent.put(4,"Medications");
@@ -150,8 +151,11 @@ public class ServerImpl {
         System.out.println(xacmlReply);
 
         PatientInfoReply.Builder patientInfoReply = getAccessControlOutcome(xacmlReply);
+        //this builder that I got from the outcome has already the permission bit and, eventually, the advice, set.
+        //now I just need to add the actual records if the decision was Permit
+
         if(patientInfoReply.getPermission()) { //IF PERMIT
-            //TODO RETRIEVE MEDICAL RECORDS FROM DATABASE AND ADD TO REPLY
+            //TODO RETRIEVE MEDICAL RECORDS OF PATIENT patientID FROM DATABASE AND ADD TO REPLY
 //            patientInfoReply.setRecords() ...;
 
             //TEMPORARY:
@@ -172,7 +176,7 @@ public class ServerImpl {
                                     .setYear(date.getYear())
                                     .build() )
             );
-        }
+        } //else do nothing, the rest of the reply is already set
         //IF PERMISSION IS DENIED, THE PERMISSION BIT AND THE ADVICE ARE ALREADY SET BY THE getAccessControlOutcome() FUNCTION
         return patientInfoReply.build();
     }
@@ -245,13 +249,13 @@ public class ServerImpl {
         PatientInfoReply.Builder res = PatientInfoReply.newBuilder();
 
         try {
+//          ------------------------------ PARSE DECISION OUTCOME ------------------------------
             Document document = builder.parse(new InputSource(new StringReader(xacmlReply)));
             Element rootElement = document.getDocumentElement();
 
             Node decision = rootElement.getElementsByTagName("Decision").item(0); //ONLY ONE
             String decisionValue = decision.getNodeValue();
             System.out.println("PARSED DECISION IS: " + decisionValue);
-
 
             if(decisionValue.equals("Permit")) {
                 res.setPermission(true);
@@ -308,12 +312,28 @@ public class ServerImpl {
                 "               <AttributeValue DataType=\"urn:oasis:names:tc:xacml:1.0:data-type:rfc822Name\">" + whoami + "</AttributeValue>\n" +
                 "          </Attribute>\n" +
                 "     </Attributes>\n");
-        for(int info : selectionsList) {
+        if(selectionsList.get(0) == 8) { //PUT ALL FIELDS
+            for(String field : MedicalRecordContent.values()) {
+                request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
+                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#anyURI\">" + field + "</AttributeValue>\n" +
+                        "          </Attribute>\n" +
+                        "     </Attributes>\n");
+            }
+        }
+        else { //ONLY NAME SURNAME PLUS SELECTIONS
             request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
                     "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n" +
-                    "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#anyURI\">" + MedicalRecordContent.get(info) + "</AttributeValue>\n" +
+                    "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#anyURI\"> NameSurname </AttributeValue>\n" +
                     "          </Attribute>\n" +
                     "     </Attributes>\n");
+            for (int info : selectionsList) {
+                request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
+                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#anyURI\">" + MedicalRecordContent.get(info) + "</AttributeValue>\n" +
+                        "          </Attribute>\n" +
+                        "     </Attributes>\n");
+            }
         }
 
         request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\">\n" +
@@ -322,7 +342,6 @@ public class ServerImpl {
                 "          </Attribute>\n" +
                 "     </Attributes>\n" +
                 "</Request>");
-
 
         return request.toString();
     }
