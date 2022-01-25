@@ -5,7 +5,10 @@
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/VisitDateOrBuilder.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/HelloReplyOrBuilder.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/HospitalServices.java
+/Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/AccessControlRequest.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/PersonalDataOrBuilder.java
+/Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/AccessControlReplyOrBuilder.java
+/Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/grpc-java/AccessControlServiceGrpc.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/RegisterRequestOrBuilder.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/HelloRequest.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/MedicalRecordsOrBuilder.java
@@ -15,6 +18,7 @@
 /Users/enrico/Desktop/SIRS/project/ServerTLS/src/main/java/Constants.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/MedicalRecords.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/DummyValidationRequestOrBuilder.java
+/Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/AccessControlReply.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/RegisterReplyOrBuilder.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/DummyValidationReplyOrBuilder.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/HelloRequestOrBuilder.java
@@ -27,7 +31,7 @@
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/DummyValidationRequest.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/src/main/java/AuthorizationServerInterceptor.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/Role.java
-/Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/grpc-java/XACMLServiceGrpc.java
+/Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/AccessControlRequestOrBuilder.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/VisitDate.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/PatientInfoRequest.java
 /Users/enrico/Desktop/SIRS/project/ServerTLS/target/generated-sources/protobuf/java/DummyValidationReply.java
