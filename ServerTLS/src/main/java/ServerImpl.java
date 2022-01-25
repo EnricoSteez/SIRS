@@ -25,7 +25,7 @@ import java.util.*;
 
 /**
  * ServerImpl is a class that implements data retrieval methods (APIs)
- * The ServerTls accesses these methods to retrieve the patients information
+ * The ServerTls accesses these methods to retrieve the patients' information
  * from the underlying DB
  */
 public class ServerImpl {
@@ -71,7 +71,7 @@ public class ServerImpl {
             
             // sirs is the database name, root is the user and last parameter is the password: use null if no password is set!!
         } catch (ClassNotFoundException|SQLException e) {
-            System.err.println("ERROR CONNECTING TO THE DATABASE, CHECK THE DRIVEMANAGER.GETCONNECTION PARAMETERS");
+            System.err.println("ERROR CONNECTING TO THE DATABASE, CHECK THE DRIVE MANAGER.CONNECTION PARAMETERS");
             e.printStackTrace();
             System.exit(0);
         }
@@ -151,8 +151,10 @@ public class ServerImpl {
     }
 
     public PatientInfoReply retrievePatientInfo (int patientID, Role whoami, List<Integer> selectionsList) {
-        System.out.println("CREATING ACCESS REQUEST STRING:");
         String xacmlRequest = createRequestString(whoami, selectionsList, "read");
+        System.out.println("CREATING ACCESS REQUEST STRING:");
+        System.out.println(xacmlRequest);
+
 //      --------------------------- PDP ACCESS CONTROL REQUEST ---------------------------
         AccessControlRequest request = AccessControlRequest.newBuilder().setXacmlRequest(xacmlRequest).build();
         AccessControlReply reply = blockingStub.validateAccess(request);

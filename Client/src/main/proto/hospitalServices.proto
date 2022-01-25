@@ -16,6 +16,7 @@ enum Role {
   CLINICAL_ASSISTANT = 4;
   PORTER_VOLUNTEER = 5;
   WARD_CLERK = 6;
+  ADMIN = 7;
 }
 
 // The request message containing the user's name.

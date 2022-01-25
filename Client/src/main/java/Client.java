@@ -204,24 +204,6 @@ public class Client {
             boolean retry = true;
             int nextOp=0;
 
-            while(retry) {
-                System.out.println("Options:");
-                System.out.println("[1] -> REGISTER NEW EMPLOYEE");
-                System.out.println("[2] -> Head to LOGIN");
-                String choice = System.console().readLine();
-                try {
-                    nextOp = Integer.parseInt(choice);
-                    if(nextOp == 1 || nextOp == 2)
-                        retry = false;
-                } catch (NumberFormatException e) {
-                    System.out.println(choice + "It's easy to choose, there are just two options...");
-                }
-            }
-
-            if(nextOp == 1)
-                client.register();
-
-            //PROCEED WITH LOGIN ANYWAYS
             LoginReply.Code loginCode = LoginReply.Code.UNRECOGNIZED;
             //LOGIN ONLY ONCE, TO LOG WITH A DIFFERENT USER, JUST QUIT AND RERUN THE CLIENT FOR SIMPLICITY
             while (!loginCode.equals(LoginReply.Code.SUCCESS)) { //REPEAT LOGIN UNTIL SUCCESSFUL
@@ -238,6 +220,32 @@ public class Client {
                         break;
                 }
             }
+
+            if(userRole == Role.ADMIN){
+
+            }
+
+            while(retry) {
+
+                System.out.println("Options:");
+                System.out.println("[1] -> REGISTER NEW EMPLOYEE");
+                System.out.println("[2] -> Head to LOGIN");
+                String choice = System.console().readLine();
+                try {
+                    nextOp = Integer.parseInt(choice);
+                    if(nextOp == 1 || nextOp == 2)
+                        retry = false;
+                } catch (NumberFormatException e) {
+                    System.out.println();
+                    System.out.println(choice + "It's easy to choose, there are just two options...");
+                }
+            }
+
+            if(nextOp == 1)
+                client.register();
+
+            //PROCEED WITH LOGIN ANYWAYS
+
 
             //AFTER SUCCESSFUL LOGIN, A USER INTERACTION LOOP STARTS UNTIL LOGOUT
             System.out.println("Insert PatientID to retrieve info, -1 to logout");
