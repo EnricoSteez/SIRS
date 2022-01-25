@@ -22,7 +22,10 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.sql.*;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.Date;
 
 /**
  * ServerImpl is a class that implements data retrieval methods (APIs)
@@ -34,7 +37,7 @@ public class ServerImpl {
     private static ServerImpl instance = null;
     private static AccessControlServiceGrpc.AccessControlServiceBlockingStub blockingStub;
     private static DocumentBuilder builder;
-    private Map<Integer,String> MedicalRecordContent = new HashMap<Integer,String>();
+    private final Map<Integer,String> MedicalRecordContent = new HashMap<Integer,String>();
 
     public static ServerImpl getInstance(String target) {
         if(instance == null)
@@ -43,6 +46,7 @@ public class ServerImpl {
     }
 
     private ServerImpl(String target){
+        //THIS IS JUST A MAPPING FOR THE USER SELECTION TO PUT IN THE PDP REQUEST
         MedicalRecordContent.put(2,"PersonalData");
         MedicalRecordContent.put(3,"Problems");
         MedicalRecordContent.put(4,"Medications");
@@ -149,6 +153,25 @@ public class ServerImpl {
         if(patientInfoReply.getPermission()) { //IF PERMIT
             //TODO RETRIEVE MEDICAL RECORDS FROM DATABASE AND ADD TO REPLY
 //            patientInfoReply.setRecords() ...;
+
+            //TEMPORARY:
+            LocalDate date = LocalDate.now();
+            patientInfoReply.setRecords(
+                    MedicalRecords.newBuilder()
+                            .setAllergies("Dog's hair")
+                            .setPatientId(patientID)
+                            .setHealthHistory("Heart attack on 10/10/2010")
+                            .setNameSurname("Enrico Giorio")
+                            .setPersonalData(PersonalData.newBuilder()
+                                    .setEmail("enrico.giorio@tecnico.ulisboa.pt").build())
+                            .setMedications(1,"Paracetamol")
+                            .setMedications(2,"Nixar")
+                            .setVisitsHistory(1, VisitDate.newBuilder()
+                                    .setDay(date.getDayOfMonth())
+                                    .setMonth(date.getMonthValue())
+                                    .setYear(date.getYear())
+                                    .build() )
+            );
         }
         //IF PERMISSION IS DENIED, THE PERMISSION BIT AND THE ADVICE ARE ALREADY SET BY THE getAccessControlOutcome() FUNCTION
         return patientInfoReply.build();
@@ -219,6 +242,8 @@ public class ServerImpl {
      * @return a PatientInfoReply.Builder with the permission bit and, in case permission is denied, the advice, already set.
      */
     private PatientInfoReply.Builder getAccessControlOutcome(String xacmlReply) {
+        PatientInfoReply.Builder res = PatientInfoReply.newBuilder();
+
         try {
             Document document = builder.parse(new InputSource(new StringReader(xacmlReply)));
             Element rootElement = document.getDocumentElement();
@@ -227,17 +252,15 @@ public class ServerImpl {
             String decisionValue = decision.getNodeValue();
             System.out.println("PARSED DECISION IS: " + decisionValue);
 
+
             if(decisionValue.equals("Permit")) {
-                return PatientInfoReply.newBuilder()
-                        .setPermission(true);
+                res.setPermission(true);
             }
             else { //ANYTHING OTHER THAN PERMIT IS DENY
                 Node advice = rootElement.getElementsByTagName("Advice").item(0); //ONLY ONE
                 String adviceMessage = advice.getFirstChild().getNodeValue();
                 System.out.println("ADVICE IS: " + adviceMessage);
-                return PatientInfoReply.newBuilder()
-                        .setPermission(false)
-                        .setPdpAdvice(adviceMessage);
+                res.setPermission(false).setPdpAdvice(adviceMessage);
             }
 
         } catch (SAXException|IOException e) {
@@ -245,6 +268,8 @@ public class ServerImpl {
             System.err.println("ERROR CREATING A DOCUMENT OUT OF THE XACML REPLY");
             System.exit(0);
         }
+
+        return res;
     }
 
     private static char[] convertToCharArray(final byte[] source) {
