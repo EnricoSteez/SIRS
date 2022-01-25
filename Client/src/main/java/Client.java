@@ -6,13 +6,12 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.TlsChannelCredentials;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.security.interfaces.RSAPrivateKey;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,8 +20,9 @@ public class Client {
     private static final Logger logger = Logger.getLogger(Client.class.getName());
 
     private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
-
+    private static final String signatureAlg = "SHA256withRSA";
     private static Role userRole = null;
+    private Random rand = new Random();
 //    private static String loggedUser = null;
 
     /**
@@ -119,7 +119,46 @@ public class Client {
         }
     }
 
+    private void registerCertificate(String certificatePath, String privateKeyPath){
+        try {
+            System.out.println("Registering certificate");
+            String certificateStr = RSAOperations.readFile(certificatePath);
+            String nonce = Integer.toString(rand.nextInt());
+            RSAPrivateKey privateKey = RSAOperations.getPrivateKeyFromFile(privateKeyPath);
+            String signedNonce = RSAOperations.sign(privateKey, nonce, signatureAlg);
+            SignatureM signature = SignatureM.newBuilder()
+                    .setSignature(signedNonce)
+                    .setCryptAlgo(signatureAlg)
+                    .setNonce(rand.nextInt())
+                    .build();
+            //System.out.println(certificateStr);
+            RegisterCertificateRequest request = RegisterCertificateRequest.newBuilder()
+            //pass also id
+                    .setCertificate(certificateStr)
+                    .setNonce(nonce)
+                    .setSignedNonce(signature)
+                    .build();
+            RegisterCertificateReply reply = blockingStub.registerCertificate(request);
+
+            if(reply.getOk()){
+                System.out.println("Successfully registered certificate");
+            }else{
+                System.out.println("There was a problem registering the certificate");
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Problem reading certificate or private key");
+        }
+    }
+
     public static void main(String[] args) throws Exception {
+
+//        registerCertificate("../Keys/server.crt");
+    }
+
+    public static void main2(String[] args) throws Exception {
 
         if (args.length < 2 || args.length == 4 || args.length > 5) {
             System.out.println("USAGE: Client host port [trustCertCollectionFilePath " +

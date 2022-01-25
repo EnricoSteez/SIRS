@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.cert.Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.sql.*;
@@ -65,9 +66,13 @@ public class ServerImpl {
         }
 
         try{
+            System.setProperty("javax.net.ssl.trustStore", "../Keys/DBKeys/dbtruststore");
+            System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/sirs","root",null);
+                "jdbc:mysql://localhost:3306/main","root","ga38");
+            
             // sirs is the database name, root is the user and last parameter is the password: use null if no password is set!!
         } catch (ClassNotFoundException|SQLException e) {
             System.err.println("ERROR CONNECTING TO THE DATABASE, CHECK THE DRIVEMANAGER.GETCONNECTION PARAMETERS");
@@ -175,6 +180,25 @@ public class ServerImpl {
         }
         //IF PERMISSION IS DENIED, THE PERMISSION BIT AND THE ADVICE ARE ALREADY SET BY THE getAccessControlOutcome() FUNCTION
         return patientInfoReply.build();
+    }
+
+    public boolean registerCertificate(int userId, String certificate, String nonce, SignatureM signature){
+
+        try {
+            //check if signature matches certificate
+            Certificate cert = RSAOperations.getCertificateFromString(certificate);
+            boolean certMatches = RSAOperations.verify(cert.getPublicKey(), nonce, signature.getSignature(), signature.getCryptAlgo());
+            if(!certMatches){
+                return false;
+            }
+
+            //register certificate to userId
+            RSAOperations.writeFile(certificate, ServerTls.certificatesPath + userId + ".crt");
+
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     public boolean registerUser (String username, byte[] password, Role role) {

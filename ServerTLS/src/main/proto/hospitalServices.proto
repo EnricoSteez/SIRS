@@ -7,6 +7,7 @@ service HospitalService {
   rpc RetrievePatientInfo (PatientInfoRequest) returns (PatientInfoReply) {}
   rpc Login(LoginRequest) returns (LoginReply) {}
   rpc Register(RegisterRequest) returns (RegisterReply) {}
+  rpc RegisterCertificate(RegisterCertificateRequest) returns (RegisterCertificateReply) {}
 }
 
 enum Role {
@@ -121,4 +122,20 @@ message AccessControlRequest {
 
 message AccessControlReply {
   string xacmlReply = 2;
+}
+
+message RegisterCertificateRequest{
+  string certificate = 1;
+  string nonce = 2;
+  SignatureM signedNonce = 3;
+}
+
+message RegisterCertificateReply{
+  bool ok = 1;
+}
+
+message SignatureM{
+  string signature = 1;
+  string cryptAlgo = 2;
+  int32 nonce = 3;
 }

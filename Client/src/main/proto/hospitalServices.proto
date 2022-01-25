@@ -6,6 +6,7 @@ service HospitalService {
   rpc RetrievePatientInfo (PatientInfoRequest) returns (PatientInfoReply) {}
   rpc Login(LoginRequest) returns (LoginReply) {}
   rpc Register(RegisterRequest) returns (RegisterReply) {}
+  rpc RegisterCertificate(RegisterCertificateRequest) returns (RegisterCertificateReply) {}
 }
 enum Role {
   LAB_EMPLOYEE = 0;
@@ -96,5 +97,21 @@ message RegisterRequest {
 
 message RegisterReply {
   bool ok = 1;
+}
+
+message RegisterCertificateRequest{
+  string certificate = 1;
+  string nonce = 2;
+  SignatureM signedNonce = 3;
+}
+
+message RegisterCertificateReply{
+  bool ok = 1;
+}
+
+message SignatureM{
+  string signature = 1;
+  string cryptAlgo = 2;
+  int32 nonce = 3;
 }
 

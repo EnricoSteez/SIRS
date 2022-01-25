@@ -1,3 +1,4 @@
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -39,38 +40,49 @@ public class RSAOperations {
 //		System.out.println(verify(pubKey2, msg, signature));
 //	}
 
-	public static X509Certificate getCertificate(String certificatePath) throws Exception {
+	public static X509Certificate getCertificateFromPath(String certificatePath) throws Exception {
 		CertificateFactory fac = CertificateFactory.getInstance("X509");
 		FileInputStream is = new FileInputStream(certificatePath);
 		X509Certificate cert = (X509Certificate) fac.generateCertificate(is);
 		//TODO check validity of certificate?
 		return cert;
 	}
-	
+
+	public static X509Certificate getCertificateFromString(String strCertificate) throws Exception {
+		CertificateFactory fac = CertificateFactory.getInstance("X509");
+		X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(strCertificate.getBytes()));
+		//TODO check validity of certificate?
+		return cert;
+	}
+
+	public static String readFile(String filename) throws IOException {
+		return new String(Files.readAllBytes(Paths.get(filename)), Charset.defaultCharset());
+	}
+
 	public static RSAPrivateKey getPrivateKeyFromFile(String filename) throws IOException, GeneralSecurityException {
-	    String privateKeyPEM = new String(Files.readAllBytes(Paths.get(filename)), Charset.defaultCharset());
-	    privateKeyPEM = privateKeyPEM.replace("-----BEGIN PRIVATE KEY-----\n", "");
-	    privateKeyPEM = privateKeyPEM.replace("-----END PRIVATE KEY-----", "");
-	    byte[] encoded = Base64.getMimeDecoder().decode((privateKeyPEM));
-	    KeyFactory kf = KeyFactory.getInstance("RSA");
-	    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
-	    RSAPrivateKey privKey = (RSAPrivateKey) kf.generatePrivate(keySpec);
-	    return privKey;
+		String privateKeyPEM = new String(Files.readAllBytes(Paths.get(filename)), Charset.defaultCharset());
+		privateKeyPEM = privateKeyPEM.replace("-----BEGIN PRIVATE KEY-----\n", "");
+		privateKeyPEM = privateKeyPEM.replace("-----END PRIVATE KEY-----", "");
+		byte[] encoded = Base64.getMimeDecoder().decode((privateKeyPEM));
+		KeyFactory kf = KeyFactory.getInstance("RSA");
+		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
+		RSAPrivateKey privKey = (RSAPrivateKey) kf.generatePrivate(keySpec);
+		return privKey;
 	}
-	
-	public static String sign(PrivateKey privateKey, String message) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, UnsupportedEncodingException {
-	    Signature sign = Signature.getInstance("SHA256withRSA");
-	    sign.initSign(privateKey);
-	    sign.update(message.getBytes("UTF-8"));
-	    return new String(Base64.getEncoder().encodeToString((sign.sign())));
+
+	public static String sign(PrivateKey privateKey, String message, String algorithm) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, UnsupportedEncodingException {
+		Signature sign = Signature.getInstance(algorithm);
+		sign.initSign(privateKey);
+		sign.update(message.getBytes("UTF-8"));
+		return new String(Base64.getEncoder().encodeToString((sign.sign())));
 	}
 
 
-	public static boolean verify(PublicKey publicKey, String message, String signature) throws SignatureException, NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeyException {
-	    Signature sign = Signature.getInstance("SHA256withRSA");
-	    sign.initVerify(publicKey);
-	    sign.update(message.getBytes("UTF-8"));
-	    return sign.verify(Base64.getMimeDecoder().decode((signature.getBytes("UTF-8"))));
+	public static boolean verify(PublicKey publicKey, String message, String signature, String algorithm) throws SignatureException, NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeyException {
+		Signature sign = Signature.getInstance(algorithm);
+		sign.initVerify(publicKey);
+		sign.update(message.getBytes("UTF-8"));
+		return sign.verify(Base64.getMimeDecoder().decode((signature.getBytes("UTF-8"))));
 	}
 
 //	public static String encrypt(String rawText, PublicKey publicKey) throws IOException, GeneralSecurityException {

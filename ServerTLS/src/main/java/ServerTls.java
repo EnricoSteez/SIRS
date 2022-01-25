@@ -3,6 +3,7 @@ import io.grpc.Server;
 import io.grpc.ServerCredentials;
 import io.grpc.TlsServerCredentials;
 import io.grpc.stub.StreamObserver;
+import sun.security.krb5.internal.crypto.RsaMd5CksumType;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +16,8 @@ import java.util.logging.Logger;
  */
 public class ServerTls {
     private static final Logger logger = Logger.getLogger(ServerTls.class.getName());
+
+    public static final String certificatesPath = "UserCertificates" + File.separator;
 
     private Server server;
     private final int port;
@@ -66,7 +69,8 @@ public class ServerTls {
      * Main launches the server from the command line.
      */
     public static void main (String[] args) throws IOException, InterruptedException {
-        if (args.length != 5) {
+
+        if (args.length != 4) {
             System.out.println(
                     "USAGE: ServerTls port certChainFilePath privateKeyFilePath PDPaddress:PDPport");
             System.exit(0);
@@ -139,6 +143,11 @@ public class ServerTls {
             RegisterReply reply = RegisterReply.newBuilder().setOk(ok).build();
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
+
+        }
+
+        public void registerCertificate(RegisterCertificateRequest request, StreamObserver<RegisterCertificateReply> responseObserver){
+            super.registerCertificate(request, responseObserver);
 
         }
     }
