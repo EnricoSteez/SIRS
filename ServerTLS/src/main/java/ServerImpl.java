@@ -1,14 +1,28 @@
 import com.google.protobuf.ByteString;
+import io.grpc.Channel;
+import io.grpc.Grpc;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.StringReader;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * ServerImpl is a class that implements data retrieval methods (APIs)
@@ -17,8 +31,35 @@ import java.util.List;
  */
 public class ServerImpl {
     private Connection con;
+    private static ServerImpl instance = null;
+    private static AccessControlServiceGrpc.AccessControlServiceBlockingStub blockingStub;
+    private static DocumentBuilder builder;
+    private Map<Integer,String> MedicalRecordContent = new HashMap<Integer,String>();
 
-    public ServerImpl(){
+    public static ServerImpl getInstance(String target) {
+        if(instance == null)
+            instance = new ServerImpl(target);
+        return instance;
+    }
+
+    private ServerImpl(String target){
+        MedicalRecordContent.put(2,"PersonalData");
+        MedicalRecordContent.put(3,"Problems");
+        MedicalRecordContent.put(4,"Medications");
+        MedicalRecordContent.put(5,"HealthHistory");
+        MedicalRecordContent.put(6,"Allergies");
+        MedicalRecordContent.put(7,"VisitsHistory");
+
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
+        try {
+            builder = factory.newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+            System.err.println("ERROR IN BUILDING DOCUMENT FACTORY");
+            System.exit(0);
+        }
+
         try{
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
@@ -29,6 +70,14 @@ public class ServerImpl {
             e.printStackTrace();
             System.exit(0);
         }
+
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(target)
+                // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
+                // needing certificates.
+                .usePlaintext()
+                .build();
+
+        blockingStub = AccessControlServiceGrpc.newBlockingStub(channel);
     }
     public String sayHello (String name) {
         return "Ciao " + name;
@@ -40,7 +89,7 @@ public class ServerImpl {
         Blob saltPlusHashBlob = null;
         int saltLength = 16;
         int hashLength = 16;
-        //length of the stored password: saltLength + hashlength
+        //length of the stored password: saltLength (16B) + hashlength (16B)
         try {
             statement = con.prepareStatement("SELECT password FROM Users WHERE username=?");
             statement.setString(1,username);
@@ -87,23 +136,22 @@ public class ServerImpl {
     }
 
     public PatientInfoReply retrievePatientInfo (int patientID, Role whoami, List<Integer> selectionsList) {
-        //TODO XACML PERMISSION REQUEST
-        //For the moment, let's retrieve all the shit
-        //we will figure it out later
-        PatientInfoReply info = PatientInfoReply.newBuilder().build();
+        System.out.println("CREATING ACCESS REQUEST STRING:");
+        String xacmlRequest = createRequestString(whoami, selectionsList, "read");
+//      --------------------------- PDP ACCESS CONTROL REQUEST ---------------------------
+        AccessControlRequest request = AccessControlRequest.newBuilder().setXacmlRequest(xacmlRequest).build();
+        AccessControlReply reply = blockingStub.validateAccess(request);
+        String xacmlReply = reply.getXacmlReply();
+        System.out.println("RECEIVED XACML REPLY:");
+        System.out.println(xacmlReply);
 
-        return info;
-    }
-
-    public static char[] convertToCharArray(final byte[] source) {
-        if (source == null) {
-            return null;
+        PatientInfoReply.Builder patientInfoReply = getAccessControlOutcome(xacmlReply);
+        if(patientInfoReply.getPermission()) { //IF PERMIT
+            //TODO RETRIEVE MEDICAL RECORDS FROM DATABASE AND ADD TO REPLY
+//            patientInfoReply.setRecords() ...;
         }
-        final char[] result = new char[source.length];
-        for (int i = 0; i < source.length; i++) {
-            result[i] = (char) source[i];
-        }
-        return result;
+        //IF PERMISSION IS DENIED, THE PERMISSION BIT AND THE ADVICE ARE ALREADY SET BY THE getAccessControlOutcome() FUNCTION
+        return patientInfoReply.build();
     }
 
     public boolean registerUser (String username, byte[] password, Role role) {
@@ -165,6 +213,51 @@ public class ServerImpl {
         return false;
     }
 
+    /**
+     *
+     * @param xacmlReply an XML-formatted string coming from the PDP
+     * @return a PatientInfoReply.Builder with the permission bit and, in case permission is denied, the advice, already set.
+     */
+    private PatientInfoReply.Builder getAccessControlOutcome(String xacmlReply) {
+        try {
+            Document document = builder.parse(new InputSource(new StringReader(xacmlReply)));
+            Element rootElement = document.getDocumentElement();
+
+            Node decision = rootElement.getElementsByTagName("Decision").item(0); //ONLY ONE
+            String decisionValue = decision.getNodeValue();
+            System.out.println("PARSED DECISION IS: " + decisionValue);
+
+            if(decisionValue.equals("Permit")) {
+                return PatientInfoReply.newBuilder()
+                        .setPermission(true);
+            }
+            else { //ANYTHING OTHER THAN PERMIT IS DENY
+                Node advice = rootElement.getElementsByTagName("Advice").item(0); //ONLY ONE
+                String adviceMessage = advice.getFirstChild().getNodeValue();
+                System.out.println("ADVICE IS: " + adviceMessage);
+                return PatientInfoReply.newBuilder()
+                        .setPermission(false)
+                        .setPdpAdvice(adviceMessage);
+            }
+
+        } catch (SAXException|IOException e) {
+            e.printStackTrace();
+            System.err.println("ERROR CREATING A DOCUMENT OUT OF THE XACML REPLY");
+            System.exit(0);
+        }
+    }
+
+    private static char[] convertToCharArray(final byte[] source) {
+        if (source == null) {
+            return null;
+        }
+        final char[] result = new char[source.length];
+        for (int i = 0; i < source.length; i++) {
+            result[i] = (char) source[i];
+        }
+        return result;
+    }
+
     private byte[] hash(byte[] salt, byte[] password) {
         char[] passCharArray = convertToCharArray(password);
 //        System.err.println("The plaintext password is: " + Arrays.toString(passCharArray));
@@ -179,6 +272,34 @@ public class ServerImpl {
         }
 
         return null;
+    }
+
+    private String createRequestString (Role whoami, List<Integer> selectionsList, String action) {
+        StringBuilder request = new StringBuilder(  "<Request xmlns=\"urn:oasis:names:tc:xacml:3.0:schema:os\"\n" +
+                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "xsi:schemaLocation=\"urn:oasis:names:tc:xacml:3.0:schema:os http://docs.oasis-open.org/xacml/FIXME.xsd\">\n" +
+                "     <Attributes Category=\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\">\n" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:subject:subject-id\">\n" +
+                "               <AttributeValue DataType=\"urn:oasis:names:tc:xacml:1.0:data-type:rfc822Name\">" + whoami + "</AttributeValue>\n" +
+                "          </Attribute>\n" +
+                "     </Attributes>\n");
+        for(int info : selectionsList) {
+            request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
+                    "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n" +
+                    "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#anyURI\">" + MedicalRecordContent.get(info) + "</AttributeValue>\n" +
+                    "          </Attribute>\n" +
+                    "     </Attributes>\n");
+        }
+
+        request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\">\n" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\">\n" +
+                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + action + "</AttributeValue>\n" +
+                "          </Attribute>\n" +
+                "     </Attributes>\n" +
+                "</Request>");
+
+
+        return request.toString();
     }
 
 }

@@ -35,9 +35,10 @@ message PatientInfoRequest {
   repeated int32 selections = 3;
 }
 message PatientInfoReply {
-  oneof info {
+  bool permission = 2;
+  oneof result {
     MedicalRecords records = 1;
-    string permissionDenied = 2;
+    string pdpAdvice = 3;
   }
 }
 
@@ -101,8 +102,9 @@ message RegisterReply {
 
 //services for XACML permission validation
 //interaction between application server (PEP) and PDP
-service XACMLService {
+service AccessControlService {
   rpc DummyValidationForTesting (DummyValidationRequest) returns (DummyValidationReply) {}
+  rpc ValidateAccess (AccessControlRequest) returns (AccessControlReply);
 }
 
 message DummyValidationRequest {
@@ -111,4 +113,12 @@ message DummyValidationRequest {
 
 message DummyValidationReply {
 
+}
+
+message AccessControlRequest {
+  string xacmlRequest = 1;
+}
+
+message AccessControlReply {
+  string xacmlReply = 2;
 }

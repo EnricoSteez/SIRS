@@ -1,22 +1,14 @@
-import com.google.protobuf.ByteString;
 import io.grpc.Grpc;
 import io.grpc.Server;
 import io.grpc.ServerCredentials;
 import io.grpc.TlsServerCredentials;
 import io.grpc.stub.StreamObserver;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 
 /**
  * Server that manages startup/shutdown of a {@code Greeter} server with TLS enabled.
@@ -25,19 +17,19 @@ public class ServerTls {
     private static final Logger logger = Logger.getLogger(ServerTls.class.getName());
 
     private Server server;
-
     private final int port;
     private final ServerCredentials creds;
+    private static String PDPtarget;
 
-    public ServerTls (int port, ServerCredentials creds) {
+    public ServerTls (int port, ServerCredentials creds, String PDPtarget) {
         this.port = port;
         this.creds = creds;
+        ServerTls.PDPtarget = PDPtarget;
     }
 
     private void start () throws IOException {
         server = Grpc.newServerBuilderForPort(port, creds)
                 .addService(new HospitalService())
-                .addService(new XACMLService())
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
@@ -74,32 +66,32 @@ public class ServerTls {
      * Main launches the server from the command line.
      */
     public static void main (String[] args) throws IOException, InterruptedException {
-        if (args.length < 3 || args.length > 4) {
+        if (args.length != 5) {
             System.out.println(
-                    "USAGE: ServerTls port certChainFilePath privateKeyFilePath " +
-                            "[trustCertCollectionFilePath]\n  Note: You only need to supply trustCertCollectionFilePath if you want " +
-                            "to enable Mutual TLS.");
+                    "USAGE: ServerTls port certChainFilePath privateKeyFilePath PDPaddress:PDPport");
             System.exit(0);
         }
 
         // If only providing a private key, you can use TlsServerCredentials.create() instead of
         // interacting with the Builder.
 
+
         TlsServerCredentials.Builder tlsBuilder = TlsServerCredentials.newBuilder()
                 .keyManager(new File(args[1]), new File(args[2]));
-        if (args.length == 4) {
-            tlsBuilder.trustManager(new File(args[3]));
-            tlsBuilder.clientAuth(TlsServerCredentials.ClientAuth.REQUIRE);
-        }
+
+        tlsBuilder.trustManager(new File(args[3]));
+        tlsBuilder.clientAuth(TlsServerCredentials.ClientAuth.REQUIRE);
+
         final ServerTls server = new ServerTls(
-                Integer.parseInt(args[0]), tlsBuilder.build());
+                Integer.parseInt(args[0]), tlsBuilder.build(), args[4]);
+
         server.start();
         server.blockUntilShutdown();
     }
 
     //check permission policy and eventually delegate data retrieval to implementation class
     static class HospitalService extends HospitalServiceGrpc.HospitalServiceImplBase {
-        private final ServerImpl serverImpl = new ServerImpl();
+        private final ServerImpl serverImpl = ServerImpl.getInstance(PDPtarget);
 
         //this is a general template to define a method
         //parse request, delegate to implementation and send response
@@ -153,14 +145,5 @@ public class ServerTls {
         }
     }
 
-    static class XACMLService extends XACMLServiceGrpc.XACMLServiceImplBase {
-        @Override
-        public void dummyValidationForTesting (DummyValidationRequest request, StreamObserver<DummyValidationReply> responseObserver) {
-            super.dummyValidationForTesting(request, responseObserver);
-            DummyValidationReply reply = DummyValidationReply.newBuilder().build();
-            responseObserver.onNext(reply);
-            responseObserver.onCompleted();
-        }
-    }
 
 }
