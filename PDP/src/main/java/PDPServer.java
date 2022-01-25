@@ -38,7 +38,7 @@ public class PDPServer {
     /** Start serving requests. */
     private void start () throws IOException {
         server = ServerBuilder.forPort(port)
-//                .addService(new XACMLService())
+                .addService(new AccessControlService())
                 .build()
                 .start();
         logger.info("Server started, listening on " + port);
@@ -66,20 +66,13 @@ public class PDPServer {
      */
     public static void main(String[] args) throws Exception {
 
-        if (args.length == 0) {
-            System.out.println(
-                    "USAGE: PDPServer policyFilePath");
-            System.exit(0);
-        }
-
         final PDPServer server = new PDPServer(8980);
 
-        int operationMode = Integer.parseInt(args[1]);
         server.start();
         server.blockUntilShutdown();
     }
 
-    static class AccessControl extends AccessControlServiceGrpc.AccessControlServiceImplBase {
+    static class AccessControlService extends AccessControlServiceGrpc.AccessControlServiceImplBase {
         @Override
         public void dummyValidationForTesting (DummyValidationRequest request, StreamObserver<DummyValidationReply> responseObserver) {
 //            super.dummyValidationForTesting(request, responseObserver);
