@@ -49,10 +49,6 @@ public class Client {
         logger.info("Greeting: " + response.getMessage());
     }
 
-    /**
-     * Greet server. If provided, the first element of {@code args} is the name to use in the
-     * greeting.
-     */
 
     /**
      *
@@ -60,7 +56,7 @@ public class Client {
      * {@code -1} otherwise
      */
     private LoginReply.Code login () {
-        System.out.println("------------------------------LOGIN TO PROCEED------------------------------");
+        System.out.println("------------------------------ LOGIN TO PROCEED ------------------------------");
         System.out.println("Username:");
         String username = System.console().readLine();
         System.out.println("Password:");
@@ -77,7 +73,6 @@ public class Client {
 //            loggedUser = username;
             String userID = reply.getUserId();
         }
-
         return reply.getCode();
     }
 
@@ -105,30 +100,48 @@ public class Client {
         boolean successfulRegister = false;
 
         while(!successfulRegister) {
-            System.out.println("------------------------------REGISTRATION PHASE------------------------------");
+            System.out.println("--------------HELLO ADMIN! HERE YOU CAN REGISTER ONE OR MORE NEW ACCOUNTS--------------");
 
             System.out.println("Username:");
             String username = System.console().readLine();
             System.out.println("Password:");
             char[] password = System.console().readPassword();
             byte[] passwordBytes = toBytes(password);
-            System.err.println("Byte converted password: " + Arrays.toString(passwordBytes));
+//            System.err.println("Byte converted password: " + Arrays.toString(passwordBytes));
+            System.out.println("Role:");
+            System.out.println(
+                    "[1] => LAB_EMPLOYEE\n" +
+                    "[2] => DOCTOR\n" +
+                    "[3] => NURSE\n" +
+                    "[4] => PATIENT_SERVICES_ASSISTANT\n" +
+                    "[5] => CLINICAL_ASSISTANT\n" +
+                    "[6] => PORTER_VOLUNTEER\n" +
+                    "[7] => WARD_CLERK\n"
+            );
+            String roleInput = System.console().readLine();
+            int selection;
+            try {
+                 selection = Integer.parseInt(roleInput);
+                 if(selection < 1 || selection > 7) {
+                     System.out.println("Choose wisely...");
+                     continue;
+                 }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                System.out.println("Choose wisely...");
+                continue;
+            }
+            Role role = Role.forNumber(selection);
+
             RegisterRequest request = RegisterRequest.newBuilder()
                     .setUsername(username)
                     .setPassword(ByteString.copyFrom(passwordBytes))
-                    .setRole(Role.DOCTOR)
+                    .setRole(role)
                     .build();
             System.err.println("Register Request is: " + username + " ~ " + Arrays.toString(password) + " ~ " + Role.DOCTOR);
             RegisterReply reply = blockingStub.register(request);
 
             successfulRegister = reply.getOk();
-
-            if (successfulRegister) {
-//                loggedUser = username;
-                //TODO get role from somewhere else?
-                userRole = request.getRole();
-            }
-
         }
     }
 
@@ -204,6 +217,8 @@ public class Client {
             boolean retry = true;
             int nextOp=0;
 
+//          ************************************************** LOGIN **************************************************
+
             LoginReply.Code loginCode = LoginReply.Code.UNRECOGNIZED;
             //LOGIN ONLY ONCE, TO LOG WITH A DIFFERENT USER, JUST QUIT AND RERUN THE CLIENT FOR SIMPLICITY
             while (!loginCode.equals(LoginReply.Code.SUCCESS)) { //REPEAT LOGIN UNTIL SUCCESSFUL
@@ -220,43 +235,44 @@ public class Client {
                         break;
                 }
             }
-
+//          ************************************************** REGISTER ACCOUNTS [ADMIN ONLY] **************************************************
             if(userRole == Role.ADMIN){
+                while(true) {
+                    System.out.println("Options:");
+                    System.out.println("[1] -> REGISTER NEW EMPLOYEE");
+                    System.out.println("[2] -> Head to Patients' Medical Records");
+                    String choice = System.console().readLine();
+                    try {
+                        nextOp = Integer.parseInt(choice);
+                    } catch (NumberFormatException e) {
+                        System.out.println();
+                        System.out.println(choice + "It's easy to choose, there are just two options...");
+                        continue;
+                    }
 
-            }
-
-            while(retry) {
-
-                System.out.println("Options:");
-                System.out.println("[1] -> REGISTER NEW EMPLOYEE");
-                System.out.println("[2] -> Head to LOGIN");
-                String choice = System.console().readLine();
-                try {
-                    nextOp = Integer.parseInt(choice);
-                    if(nextOp == 1 || nextOp == 2)
-                        retry = false;
-                } catch (NumberFormatException e) {
-                    System.out.println();
-                    System.out.println(choice + "It's easy to choose, there are just two options...");
+                    if(nextOp == 1)
+                        client.register();
+                    else if(nextOp == 2)
+                        break;
+                    else
+                        System.out.println(choice + "It's easy to choose, there are just two options...");
                 }
             }
-
-            if(nextOp == 1)
-                client.register();
-
-            //PROCEED WITH LOGIN ANYWAYS
-
+//          ************************************************** PATIENTS' MEDICAL RECORDS RETRIEVAL **************************************************
 
             //AFTER SUCCESSFUL LOGIN, A USER INTERACTION LOOP STARTS UNTIL LOGOUT
             System.out.println("Insert PatientID to retrieve info, -1 to logout");
             int id;
-            try {
-                id = Integer.parseInt(System.console().readLine());
-            } catch (Exception e){
-                id = -1;
+            while(true) {
+                try {
+                    id = Integer.parseInt(System.console().readLine());
+                } catch (Exception e) {
+                    continue;
+                }
+                break;
             }
-            while (id > 0){ //DO STUFF UNTIL LOGOUT
 
+            while (id > 0){ //DO STUFF UNTIL LOGOUT
                 boolean legalSelections = false;
                 List<Integer> selectedNumbers = new ArrayList<Integer>();
 
