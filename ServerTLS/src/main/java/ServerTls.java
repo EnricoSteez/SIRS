@@ -66,7 +66,7 @@ public class ServerTls {
      * Main launches the server from the command line.
      */
     public static void main (String[] args) throws IOException, InterruptedException {
-        if (args.length != 5) {
+        if (args.length != 4) {
             System.out.println(
                     "USAGE: ServerTls port certChainFilePath privateKeyFilePath PDPaddress:PDPport");
             System.exit(0);
