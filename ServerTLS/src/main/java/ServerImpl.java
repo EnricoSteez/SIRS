@@ -120,12 +120,14 @@ public class ServerImpl {
 
                 //------------------------------ CHECK FOR MATCH ------------------------------
                 if(Arrays.equals(databaseHash, userHash)) {
-                    statement = con.prepareStatement("SELECT Role FROM Users WHERE username=?");
+                    statement = con.prepareStatement("SELECT CustomerId, Role FROM Users WHERE username=?");
                     statement.setString(1,username);
                     res = statement.executeQuery();
                     res.next();
                     Role role = Role.valueOf(res.getString("Role"));
+                    String id = res.getString("CustomerId");
                     reply.setCode(LoginReply.Code.SUCCESS)
+                            .setUserId(id)
                             .setRole(role);
                 }else {
                     reply.setCode(LoginReply.Code.WRONGPASS);

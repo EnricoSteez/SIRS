@@ -75,6 +75,7 @@ public class Client {
         if(reply.getCode() == LoginReply.Code.SUCCESS) {
             userRole = reply.getRole();
 //            loggedUser = username;
+            String userID = reply.getUserId();
         }
 
         return reply.getCode();

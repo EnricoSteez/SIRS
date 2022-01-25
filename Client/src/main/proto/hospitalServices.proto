@@ -86,6 +86,7 @@ message LoginReply {
 //  }
   Code code = 1;
   Role role = 2;
+  string userId = 3;
 }
 
 

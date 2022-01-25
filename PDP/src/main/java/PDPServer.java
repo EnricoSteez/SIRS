@@ -52,9 +52,9 @@ public class PDPServer {
 //        attributeFinder.setModules(finderModules);
 //        return new PDP(new PDPConfig(attributeFinder, pdpConfig.getPolicyFinder(), null, true));
 //
+//        I THINK THAT DEFAULT CONFIG IS FINE IN THIS CASE (???)
         return new PDP(balana.getPdpConfig());
     }
-
 
     /** Start serving requests. */
     private void start () throws IOException {
@@ -107,6 +107,10 @@ public class PDPServer {
             String evaluation = pdp.evaluate(request.getXacmlRequest());
             System.out.println("EVALUATED REQUEST. OUTCOME: ");
             System.out.println(evaluation);
+            AccessControlReply reply = AccessControlReply.newBuilder().setXacmlReply(evaluation).build();
+
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
     }
 
