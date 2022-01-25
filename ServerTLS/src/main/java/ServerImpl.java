@@ -220,8 +220,10 @@ public class ServerImpl {
             statement.setString(1,username);
             ResultSet res = statement.executeQuery();
 
-            if(res.next())
+            if(res.next()) {
+                System.out.println("USERNAME " + username + " ALREADY EXISTS, SKIPPED");
                 return false;
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -337,35 +339,35 @@ public class ServerImpl {
     private String createRequestString (Role whoami, List<Integer> selectionsList, String action) {
         StringBuilder request = new StringBuilder(
                 "<Request xmlns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\" CombinedDecision=\"false\" ReturnPolicyIdList=\"false\">" +
-                "     <Attributes Category=\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\">\n" +
-                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:subject:subject-id\" IncludeInResult=\"false\">\n" +
-                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + whoami + "</AttributeValue>\n" +
-                "          </Attribute>\n" +
-                "     </Attributes>\n");
+                "     <Attributes Category=\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\">" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:subject:subject-id\" IncludeInResult=\"false\">" +
+                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + whoami + "</AttributeValue>" +
+                "          </Attribute>" +
+                "     </Attributes>" +
+                "     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">");
+        //APPEND ALL ATTRIBUTE VALUES OF CATEGORY RESOURCE
         if(selectionsList.get(0) == 8) { //PUT ALL FIELDS
             for(String field : MedicalRecordContent.values()) {
-                request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
-                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">\n" +
-                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + field + "</AttributeValue>\n" +
-                        "          </Attribute>\n" +
-                        "     </Attributes>\n");
+                request.append("          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + field + "</AttributeValue>" +
+                        "          </Attribute>");
             }
         }
         else {
             for (int info : selectionsList) {
-                request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">\n" +
-                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">\n" +
-                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + MedicalRecordContent.get(info) + "</AttributeValue>\n" +
-                        "          </Attribute>\n" +
-                        "     </Attributes>\n");
+                request.append("          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + MedicalRecordContent.get(info) + "</AttributeValue>" +
+                        "          </Attribute>");
             }
         }
 
-        request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\">\n" +
-                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\" IncludeInResult=\"false\">\n" +
-                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + action + "</AttributeValue>\n" +
-                "          </Attribute>\n" +
-                "     </Attributes>\n" +
+        request.append("</Attributes>");
+
+        request.append("     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\">" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\" IncludeInResult=\"false\">" +
+                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + action + "</AttributeValue>" +
+                "          </Attribute>" +
+                "     </Attributes>" +
                 "</Request>");
 
         return request.toString();

@@ -96,11 +96,11 @@ public class Client {
         return reply;
     }
 
-    private void register (){
+    private void registerNewAccount (){
         boolean successfulRegister = false;
 
         while(!successfulRegister) {
-            System.out.println("--------------HELLO ADMIN! HERE YOU CAN REGISTER ONE OR MORE NEW ACCOUNTS--------------");
+            System.out.println("--------------HELLO ADMIN! HERE YOU CAN REGISTER NEW ACCOUNTS--------------");
 
             System.out.println("Username:");
             String username = System.console().readLine();
@@ -116,13 +116,14 @@ public class Client {
                     "[4] => PATIENT_SERVICES_ASSISTANT\n" +
                     "[5] => CLINICAL_ASSISTANT\n" +
                     "[6] => PORTER_VOLUNTEER\n" +
-                    "[7] => WARD_CLERK\n"
+                    "[7] => WARD_CLERK\n" +
+                            "8: ADMIN"
             );
             String roleInput = System.console().readLine();
             int selection;
             try {
                  selection = Integer.parseInt(roleInput);
-                 if(selection < 1 || selection > 7) {
+                 if(selection < 1 || selection > 8) {
                      System.out.println("Choose wisely...");
                      continue;
                  }
@@ -131,17 +132,28 @@ public class Client {
                 System.out.println("Choose wisely...");
                 continue;
             }
-            Role role = Role.forNumber(selection);
+            //ROLES START FROM ZERO AND SELECTIONS ARE USER-FRIENDLY
+            Role role = Role.forNumber(selection-1);
+
+            System.out.println("You have chosen:");
+            System.out.println("USERNAME:" + username);
+            System.out.println("PASSWORD:" + Arrays.toString(password));
+            System.out.println("ROLE:" + role.name());
+
 
             RegisterRequest request = RegisterRequest.newBuilder()
                     .setUsername(username)
                     .setPassword(ByteString.copyFrom(passwordBytes))
                     .setRole(role)
                     .build();
-            System.err.println("Register Request is: " + username + " ~ " + Arrays.toString(password) + " ~ " + Role.DOCTOR);
+            System.err.println("Register Request is: " + username + " ~ " + Arrays.toString(password) + " ~ " + role.name());
             RegisterReply reply = blockingStub.register(request);
 
             successfulRegister = reply.getOk();
+            if(successfulRegister)
+                System.out.println("ALL GOOD!");
+            else
+                System.out.println("BAD OUTCOME");
         }
     }
 
@@ -236,7 +248,8 @@ public class Client {
                 }
             }
 //          ************************************************** REGISTER ACCOUNTS [ADMIN ONLY] **************************************************
-            if(userRole == Role.ADMIN){
+            if(userRole == Role.ADMIN) //HACK ALERT!! COMMENT THIS LINE IF YOU WANT TO REGISTER ADMIN ACCOUNTS FOR TESTING!
+            {
                 while(true) {
                     System.out.println("Options:");
                     System.out.println("[1] -> REGISTER NEW EMPLOYEE");
@@ -251,7 +264,7 @@ public class Client {
                     }
 
                     if(nextOp == 1)
-                        client.register();
+                        client.registerNewAccount();
                     else if(nextOp == 2)
                         break;
                     else
