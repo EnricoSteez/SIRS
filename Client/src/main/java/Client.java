@@ -90,9 +90,8 @@ public class Client {
 
         PatientInfoRequest.Builder request = PatientInfoRequest.newBuilder()
                 .setPatientID(id)
-                .setRole(userRole);
-
-        request.addAllSelections(selectedNumbers);
+                .setRole(userRole)
+                .addAllSelections(selectedNumbers);
 
 //        for(int i = 0 ; i < selectedNumbers.size() ; i++) {
 //            request.setSelections(i+1, selectedNumbers.get(i));
