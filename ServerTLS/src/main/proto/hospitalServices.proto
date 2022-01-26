@@ -90,7 +90,7 @@ message LoginReply {
   //  }
   Code code = 1;
   Role role = 2;
-  string userId = 3;
+  int32 userId = 3;
 }
 
 message RegisterRequest {
@@ -130,6 +130,7 @@ message RegisterCertificateRequest{
   string certificate = 1;
   string nonce = 2;
   SignatureM signedNonce = 3;
+  int32 userId = 4;
 }
 
 message RegisterCertificateReply{

@@ -22,6 +22,7 @@ public class Client {
     private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
     private static final String signatureAlg = "SHA256withRSA";
     private static Role userRole = null;
+    private int userID = -1;
     private Random rand = new Random();
 //    private static String loggedUser = null;
 
@@ -71,7 +72,7 @@ public class Client {
         if(reply.getCode() == LoginReply.Code.SUCCESS) {
             userRole = reply.getRole();
 //            loggedUser = username;
-            String userID = reply.getUserId();
+            userID = reply.getUserId();
         }
         return reply.getCode();
     }
@@ -175,6 +176,7 @@ public class Client {
                     .setCertificate(certificateStr)
                     .setNonce(nonce)
                     .setSignedNonce(signature)
+                    .setUserId(userID)
                     .build();
             RegisterCertificateReply reply = blockingStub.registerCertificate(request);
 

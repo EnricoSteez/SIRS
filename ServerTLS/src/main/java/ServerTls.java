@@ -148,6 +148,11 @@ public class ServerTls {
         public void registerCertificate(RegisterCertificateRequest request, StreamObserver<RegisterCertificateReply> responseObserver){
             super.registerCertificate(request, responseObserver);
 
+            boolean ok = serverImpl.registerCertificate(request.getUserId(), request.getCertificate(),
+                    request.getNonce(), request.getSignedNonce());
+            RegisterCertificateReply reply = RegisterCertificateReply.newBuilder().setOk(ok).build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
         }
     }
 

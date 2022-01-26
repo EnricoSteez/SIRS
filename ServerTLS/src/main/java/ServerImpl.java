@@ -130,7 +130,7 @@ public class ServerImpl {
                     res = statement.executeQuery();
                     res.next();
                     Role role = Role.valueOf(res.getString("Role"));
-                    String id = res.getString("CustomerId");
+                    int id = res.getInt("CustomerId");
                     reply.setCode(LoginReply.Code.SUCCESS)
                             .setUserId(id)
                             .setRole(role);
