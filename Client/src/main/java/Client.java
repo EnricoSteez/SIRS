@@ -178,7 +178,7 @@ public class Client {
                     "[5] => CLINICAL_ASSISTANT\n" +
                     "[6] => PORTER_VOLUNTEER\n" +
                     "[7] => WARD_CLERK\n" +
-                            "8: ADMIN"
+                    "[8] => ADMIN"
             );
             String roleInput = System.console().readLine();
             int selection;
@@ -353,9 +353,11 @@ public class Client {
 
                 while (!legalSelections) { //REPEAT SELECTION UNTIL VALID
                     legalSelections = true;
+                    int countRead = 0;
+                    int countWrite = 0;
 
-                    System.out.println("Select the information you would like to retrieve:");
-                    System.out.println("Options:");
+                    System.out.println("CHOOSE OPTIONS FROM ONLY ONE OF THE GROUPS\n\n");
+                    System.out.println("****************************** RETRIEVE PATIENTS INFO ******************************\n");
                     System.out.println("[1] -> Name Surname");
                     System.out.println("[2] -> Personal Information (home address, email, health number)");
                     System.out.println("[3] -> Health Issues");
@@ -366,6 +368,20 @@ public class Client {
                     System.out.println("[8] -> Lab Results");
                     System.out.println("[9] -> Complete Medical Records");
                     System.out.println("Insert either a list of selections or 9, followed by ENTER.\nDo not insert 9 along with other selections, please:");
+                    System.out.println();
+                    System.out.println("****************************** UPDATE PATIENTS INFO ******************************\n");
+                    System.out.println("[10] -> Name Surname");
+                    System.out.println("[11] -> Personal Information (home address, email, health number)");
+                    System.out.println("[12] -> Health Issues");
+                    System.out.println("[13] -> Prescribed Medications");
+                    System.out.println("[14] -> Health History");
+                    System.out.println("[15] -> Allergies");
+                    System.out.println("[16] -> Past visits history");
+                    System.out.println("[17] -> Lab Results");
+                    System.out.println("[18] -> Complete Medical Records\n\n");
+                    System.out.println("Insert either a list of selections or 18, followed by ENTER.\nDo not insert 9 along with other selections, please:");
+
+
                     String selections = System.console().readLine();
                     StringTokenizer tokenizer = new StringTokenizer(selections);
 
@@ -380,8 +396,21 @@ public class Client {
                                 legalSelections = false;
                                 System.out.println("'" + token + "' is not a valid selection! Select again...");
                             }
-                            if(selectedNumbers.contains(9) && selectedNumbers.size()>1){
-                                System.out.println("If you select more than a number, the selections must not include 9!");
+
+                            for(int i : selectedNumbers) {
+                                if(i>0 && i<10)
+                                    countRead++;
+                                else if(i>=10 && i<19)
+                                    countWrite++;
+                                else
+                                    legalSelections = false;
+                            }
+                            if(countRead>0 && countWrite>0) {
+                                System.out.println("You cannot read and write at the same time");
+                                legalSelections=false;
+                            }
+                            if((selectedNumbers.contains(9) || selectedNumbers.contains(18)) && selectedNumbers.size()>1){
+                                System.out.println("If you select more than a number, the selections must not include 9 nor 18!");
                                 legalSelections=false;
                             }
                         }
@@ -390,15 +419,20 @@ public class Client {
                         legalSelections = false;
                     }
                     //EVENTUALLY THE USER WILL SELECT SOMETHING VALID, THE REQUEST TO THE SERVER IS THEN MADE
-                    PatientInfoReply reply = client.retrievePatientInfo(id, selectedNumbers);
-                    if(reply.getPermission())
-                        client.printRecords(reply.getRecords());
-                    else {
-                        System.out.println("PERMISSION DENIED");
-                        System.out.println(reply.getPdpAdvice());
+                    if(countRead>0){ //USER CHOSE TO RETRIEVE STUFF
+                        PatientInfoReply reply = client.retrievePatientInfo(id, selectedNumbers);
+                        if(reply.getPermission())
+                            client.printRecords(reply.getRecords());
+                        else {
+                            System.out.println("PERMISSION DENIED");
+                            System.out.println(reply.getPdpAdvice());
+                        }
+                    } else { //USER CHOSE TO WRITE STUFF
+                        //todo PROCEDURE FOR WRITING RECORDS: *** P E D A N T I C ***
                     }
+
                 }
-                System.out.println("Insert another PatientID to retrieve info, -1 to logout");
+                System.out.println("\n\nInsert another PatientID, -1 to logout");
                 try {
                     id = Integer.parseInt(System.console().readLine());
                 } catch (Exception e){
