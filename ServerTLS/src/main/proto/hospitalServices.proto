@@ -53,7 +53,6 @@ message MedicalRecords {
   string healthHistory = 6;
   string allergies = 7;
   repeated VisitDate visitsHistory = 8;
-  bool permitted = 9;
   int32 patientId = 10;
   repeated string labResults = 11;
 }
@@ -105,6 +104,18 @@ message RegisterReply {
   bool ok = 1;
 }
 
+
+message WritePatientInfoRequest{
+  int32  userID = 1;
+  Role role = 2;
+  PatientInfo patientInfo = 3;
+  SignatureM signature = 4;
+}
+
+message WritePatientInfoReply{
+  bool ok = 1;
+}
+
 //services for XACML permission validation
 //interaction between application server (PEP) and PDP
 service AccessControlService {
@@ -152,15 +163,4 @@ message PatientInfo{
   int32 healthNumber = 4;
   string healthHistory = 5;
   string allergies = 6;
-}
-
-message WritePatientInfoRequest{
-  int32  userID = 1;
-  Role role = 2;
-  PatientInfo patientInfo = 3;
-  SignatureM signature = 4;
-}
-
-message WritePatientInfoReply{
-  bool ok = 1;
 }

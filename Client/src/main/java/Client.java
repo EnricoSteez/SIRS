@@ -427,7 +427,7 @@ public class Client {
                             System.out.println("PERMISSION DENIED");
                             System.out.println(reply.getPdpAdvice());
                         }
-                    } else { //USER CHOSE TO WRITE STUFF
+                    } else { //USER CHOSE TO WRITE STUFF, I already checked that there is no intersection
                         //todo PROCEDURE FOR WRITING RECORDS: *** P E D A N T I C ***
                     }
 
