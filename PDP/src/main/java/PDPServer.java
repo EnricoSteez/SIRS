@@ -1,8 +1,8 @@
-import com.att.research.xacml.api.pdp.PDPEngine;
+//import com.att.research.xacml.api.pdp.PDPEngine;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import oasis.names.tc.xacml._3_0.core.schema.wd_17.DecisionType;
+/*import oasis.names.tc.xacml._3_0.core.schema.wd_17.DecisionType;
 import oasis.names.tc.xacml._3_0.core.schema.wd_17.Request;
 import oasis.names.tc.xacml._3_0.core.schema.wd_17.Response;
 import oasis.names.tc.xacml._3_0.core.schema.wd_17.Result;
@@ -10,7 +10,7 @@ import org.ow2.authzforce.core.pdp.api.XmlUtils;
 import org.ow2.authzforce.core.pdp.api.io.PdpEngineInoutAdapter;
 import org.ow2.authzforce.core.pdp.api.io.XacmlJaxbParsingUtils;
 import org.ow2.authzforce.core.pdp.impl.PdpEngineConfiguration;
-import org.ow2.authzforce.core.pdp.impl.io.PdpEngineAdapters;
+import org.ow2.authzforce.core.pdp.impl.io.PdpEngineAdapters;*/
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDP;
 import org.wso2.balana.finder.impl.FileBasedPolicyFinderModule;
@@ -31,8 +31,8 @@ public class PDPServer {
     private Server server;
     private static Balana balana;
     private static PDP pdp;
-    private static PDPEngine pdpEngine;
-    private static PdpEngineInoutAdapter<Request, Response> authzforcePdp;
+    //private static PDPEngine pdpEngine;
+    //private static PdpEngineInoutAdapter<Request, Response> authzforcePdp;
 
 
     public PDPServer(int port) {

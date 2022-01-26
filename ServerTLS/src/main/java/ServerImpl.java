@@ -76,7 +76,7 @@ public class ServerImpl {
 
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/sirs","root",null);
+                "jdbc:mysql://localhost:3306/main","root","ga38");
             
             // sirs is the database name, root is the user and last parameter is the password: use null if no password is set!!
         } catch (ClassNotFoundException|SQLException e) {
@@ -212,7 +212,7 @@ public class ServerImpl {
         try {
             //check if signature matches certificate
             Certificate cert = RSAOperations.getCertificateFromString(certificate);
-            boolean certMatches = RSAOperations.verify(cert.getPublicKey(), nonce, signature.getSignature().getBytes(), signature.getCryptAlgo());
+            boolean certMatches = RSAOperations.verify(cert.getPublicKey(), nonce, signature.getSignature().toByteArray(), signature.getCryptAlgo());
             if(!certMatches){
                 return false;
             }
@@ -295,9 +295,13 @@ public class ServerImpl {
         try {
             byte[] message = patientInfo.toByteArray();
 
-            PublicKey pubKey = RSAOperations.getCertificateFromPath(ServerTls.certificatesPath + userId).getPublicKey();
+            System.out.println("\n\nRetrieving certificate in path: " + ServerTls.certificatesPath + userId + ".crt");
 
-            boolean signatureValid = RSAOperations.verify(pubKey, message, signatureM.getSignature().getBytes(), signatureM.getCryptAlgo());
+            System.out.println("Signing with: " + signatureM.getCryptAlgo());
+
+            PublicKey pubKey = RSAOperations.getCertificateFromPath(ServerTls.certificatesPath + userId + ".crt").getPublicKey();
+
+            boolean signatureValid = RSAOperations.verify(pubKey, message, signatureM.getSignature().toByteArray(), signatureM.getCryptAlgo());
 
             if(!signatureValid){
                 System.out.println("Signature is not valid");
@@ -305,6 +309,7 @@ public class ServerImpl {
             }
 
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("User does not have a certificate");
             return false;
         }
@@ -327,8 +332,9 @@ public class ServerImpl {
         int signatureId = 0;
         try {
             Blob signBlob = con.createBlob();
-            signBlob.setBytes(1,signatureM.getSignature().getBytes());
-            PreparedStatement statement = con.prepareStatement("INSERT INTO signature (signerId, signature) VALUES (?,?)");
+            signBlob.setBytes(1,signatureM.getSignature().toByteArray());
+            PreparedStatement statement = con.prepareStatement("INSERT INTO signature (signerId, signature) VALUES (?,?)", Statement.RETURN_GENERATED_KEYS);
+
             statement.setInt(1,userId);
             statement.setBlob(2,signBlob);
 
@@ -342,6 +348,7 @@ public class ServerImpl {
 
         } catch (SQLException e) {
             System.err.println("Problem storing signature in database");
+            e.printStackTrace();
             return false;
         }
 

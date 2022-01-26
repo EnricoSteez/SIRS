@@ -139,7 +139,7 @@ message RegisterCertificateReply{
 }
 
 message SignatureM{
-  string signature = 1;
+  bytes signature = 1;
   string cryptAlgo = 2;
   int32 nonce = 3;
 }
