@@ -2,24 +2,12 @@
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-/*import oasis.names.tc.xacml._3_0.core.schema.wd_17.DecisionType;
-import oasis.names.tc.xacml._3_0.core.schema.wd_17.Request;
-import oasis.names.tc.xacml._3_0.core.schema.wd_17.Response;
-import oasis.names.tc.xacml._3_0.core.schema.wd_17.Result;
-import org.ow2.authzforce.core.pdp.api.XmlUtils;
-import org.ow2.authzforce.core.pdp.api.io.PdpEngineInoutAdapter;
-import org.ow2.authzforce.core.pdp.api.io.XacmlJaxbParsingUtils;
-import org.ow2.authzforce.core.pdp.impl.PdpEngineConfiguration;
-import org.ow2.authzforce.core.pdp.impl.io.PdpEngineAdapters;*/
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDP;
 import org.wso2.balana.finder.impl.FileBasedPolicyFinderModule;
-import org.xml.sax.InputSource;
 
-import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,11 +23,11 @@ public class PDPServer {
     //private static PdpEngineInoutAdapter<Request, Response> authzforcePdp;
 
 
-    public PDPServer(int port) {
+    public PDPServer (int port, String operationMode) {
         this.port = port;
 
 //        BALANA
-        initBalana();
+        initBalana(operationMode);
         pdp = getPDPNewInstance();
 
 ////        AT&T (THROWS ERROR)
@@ -61,10 +49,15 @@ public class PDPServer {
 //        }
     }
 
-    private static void initBalana() {
+    private static void initBalana (String operationMode) {
         try {
             // using file based policy repository. so set the policy location as system property
-            String policyLocation = (new File(".")).getCanonicalPath() + File.separator + "resources";
+            String policyLocation;
+            if(operationMode.equals("NormalMode"))
+                policyLocation = (new File(".")).getCanonicalPath() + File.separator + "resources";
+            else
+                policyLocation = (new File(".")).getCanonicalPath() + File.separator + "AlternativePolicies";
+
             System.setProperty(FileBasedPolicyFinderModule.POLICY_DIR_PROPERTY, policyLocation);
         } catch (IOException e) {
             System.err.println("Can not locate policy repository");
@@ -121,7 +114,18 @@ public class PDPServer {
      * Main method.  This comment makes the linter happy.
      */
     public static void main(String[] args) throws Exception {
-        final PDPServer server = new PDPServer(8980);
+        if(args.length != 1) {
+            System.out.println("Usage: PDPServer [PandemicMode]");
+            System.out.println("Specify PandemicMode to start the PDP in, guess what mode...");
+            System.out.println("Without arguments, the PDP will use a Normal Mode policy");
+            System.exit(0);
+        }
+        String operationMode = "NormalMode";
+        if(args[0].equals("PandemicMode")) {
+            operationMode = "PandemicMode";
+        }
+
+        final PDPServer server = new PDPServer(8980,operationMode);
 
         server.start();
         server.blockUntilShutdown();

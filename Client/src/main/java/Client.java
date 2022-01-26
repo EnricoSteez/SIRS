@@ -429,6 +429,22 @@ public class Client {
                         }
                     } else { //USER CHOSE TO WRITE STUFF, I already checked that there is no intersection between read and write choices
                         //todo PROCEDURE FOR WRITING RECORDS: *** P E D A N T I C ***
+                        int selection = selectedNumbers.get(0); //THERE IS ONLY ONE IF I'M HERE
+                        switch (selection) {
+                            case 10:
+                                client.changeNameSurname();
+                                break;
+                            case 11:
+                                client.changePersonalInfo();
+                                break;
+                            case 12:
+                                client.addMedication();
+                            case 13:
+                                client.addHealthIssues();
+                                break;
+                            case 14:
+
+                        }
                     }
 
                 }
