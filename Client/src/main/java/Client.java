@@ -378,9 +378,7 @@ public class Client {
                     System.out.println("[15] -> Allergies");
                     System.out.println("[16] -> Past visits history");
                     System.out.println("[17] -> Lab Results");
-                    System.out.println("[18] -> Complete Medical Records\n\n");
-                    System.out.println("Insert either a list of selections or 18, followed by ENTER.\nDo not insert 9 along with other selections, please:");
-
+                    System.out.println("Insert a single number, followed by ENTER. (you can only write a single field at a time)");
 
                     String selections = System.console().readLine();
                     StringTokenizer tokenizer = new StringTokenizer(selections);
@@ -400,13 +398,17 @@ public class Client {
                             for(int i : selectedNumbers) {
                                 if(i>0 && i<10)
                                     countRead++;
-                                else if(i>=10 && i<19)
+                                else if(i>=10 && i<18)
                                     countWrite++;
                                 else
                                     legalSelections = false;
                             }
                             if(countRead>0 && countWrite>0) {
                                 System.out.println("You cannot read and write at the same time");
+                                legalSelections=false;
+                            }
+                            if(countWrite>0){
+                                System.out.println("You can only write one field at a time { for now ;) }");
                                 legalSelections=false;
                             }
                             if((selectedNumbers.contains(9) || selectedNumbers.contains(18)) && selectedNumbers.size()>1){
@@ -427,7 +429,7 @@ public class Client {
                             System.out.println("PERMISSION DENIED");
                             System.out.println(reply.getPdpAdvice());
                         }
-                    } else { //USER CHOSE TO WRITE STUFF, I already checked that there is no intersection
+                    } else { //USER CHOSE TO WRITE STUFF, I already checked that there is no intersection between read and write choices
                         //todo PROCEDURE FOR WRITING RECORDS: *** P E D A N T I C ***
                     }
 
