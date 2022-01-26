@@ -55,6 +55,7 @@ message MedicalRecords {
   repeated VisitDate visitsHistory = 8;
   bool permitted = 9;
   int32 patientId = 10;
+  repeated string labResults = 11;
 }
 
 message PersonalData {

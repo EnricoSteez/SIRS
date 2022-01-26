@@ -201,6 +201,55 @@
             </AdviceExpression>
         </AdviceExpressions>
     </Rule>
+    <Rule Effect="Deny" RuleId="labEmployees">
+        <Target>
+            <AnyOf>
+                <AllOf>
+                    <AnyOf>
+                        <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">NameSurname</AttributeValue>
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        </Match>
+                        <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">PersonalData</AttributeValue>
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        </Match>
+                        <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">Problems</AttributeValue>
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        </Match>
+                        <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">Medications</AttributeValue>
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        </Match>
+                        <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">HealthHistory</AttributeValue>
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        </Match>
+                        <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">Allergies</AttributeValue>
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        </Match>
+                        <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">VisitsHistory</AttributeValue>
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        </Match>
+                    </AnyOf>
+                    <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">LAB_EMPLOYEE</AttributeValue>
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                    </Match>
+                </AllOf>
+            </AnyOf>
+        </Target>
+        <AdviceExpressions>
+            <AdviceExpression AdviceId="labEmployees_advice" AppliesTo="Deny">
+                <AttributeAssignmentExpression AttributeId="urn:oasis:names:tc:xacml:2.0:example:attribute:text">
+                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">As a Lab Employee, you can only access Lab Results, sorry</AttributeValue>
+                </AttributeAssignmentExpression>
+            </AdviceExpression>
+        </AdviceExpressions>
+    </Rule>
     <!-- This rule is assigned to every request with outcome: Permit. If any request gets also assigned a Deny by the previous Rules, the Deny will override this Permit because of the combining algorithm: Deny Overrides-->
     <Rule RuleId="permit-rule" Effect="Permit" />
 </Policy>

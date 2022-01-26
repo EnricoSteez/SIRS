@@ -199,6 +199,7 @@ public class Client {
             System.out.println("You have chosen:");
             System.out.println("USERNAME:" + username);
             System.out.println("PASSWORD:" + Arrays.toString(password));
+            assert role != null;
             System.out.println("ROLE:" + role.name());
 
 
@@ -362,8 +363,9 @@ public class Client {
                     System.out.println("[5] -> Health History");
                     System.out.println("[6] -> Allergies");
                     System.out.println("[7] -> Past visits history");
-                    System.out.println("[8] -> Complete Medical Records");
-                    System.out.println("Insert either a list of selections or 8, followed by ENTER.\nDo not insert 8 along with other selections, please:");
+                    System.out.println("[8] -> Lab Results");
+                    System.out.println("[9] -> Complete Medical Records");
+                    System.out.println("Insert either a list of selections or 9, followed by ENTER.\nDo not insert 9 along with other selections, please:");
                     String selections = System.console().readLine();
                     StringTokenizer tokenizer = new StringTokenizer(selections);
 
@@ -378,8 +380,8 @@ public class Client {
                                 legalSelections = false;
                                 System.out.println("'" + token + "' is not a valid selection! Select again...");
                             }
-                            if(selectedNumbers.contains(8) && selectedNumbers.size()>1){
-                                System.out.println("If you select more than a number, the selections must not include 8!");
+                            if(selectedNumbers.contains(9) && selectedNumbers.size()>1){
+                                System.out.println("If you select more than a number, the selections must not include 9!");
                                 legalSelections=false;
                             }
                         }

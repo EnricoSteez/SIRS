@@ -59,6 +59,7 @@ public class ServerImpl {
         MedicalRecordContent.put(5,"HealthHistory");
         MedicalRecordContent.put(6,"Allergies");
         MedicalRecordContent.put(7,"VisitsHistory");
+        MedicalRecordContent.put(8,"LabResults");
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
@@ -451,7 +452,7 @@ public class ServerImpl {
                 "     </Attributes>" +
                 "     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">");
         //APPEND ALL ATTRIBUTE VALUES OF CATEGORY RESOURCE
-        if(selectionsList.get(0) == 8) { //PUT ALL FIELDS
+        if(selectionsList.get(0) == 9) { //PUT ALL FIELDS
             for(String field : MedicalRecordContent.values()) {
                 request.append("          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">" +
                         "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + field + "</AttributeValue>" +
