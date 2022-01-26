@@ -52,9 +52,9 @@ public class PDPServer {
 //            System.exit(0);
 //        }
 
-////        AUTHZFORCE (ERROR LOCATING THE CONFIGURATION)
+//        AUTHZFORCE (CAN'T LOCATE THE CONFIGURATION)
 //        try {
-//            PdpEngineConfiguration conf = PdpEngineConfiguration.getInstance("/Users/enrico/Desktop/SIRS/project/PDP/resources/pdpconfig.xml");
+//            PdpEngineConfiguration conf = PdpEngineConfiguration.getInstance("classpath:resources/pdpconfig.xml");
 //            authzforcePdp = PdpEngineAdapters.newXacmlJaxbInoutAdapter(conf);
 //        } catch (IOException e) {
 //            e.printStackTrace();
@@ -139,10 +139,14 @@ public class PDPServer {
         @Override
         public void validateAccess (AccessControlRequest request, StreamObserver<AccessControlReply> responseObserver) {
 //            super.validateAccess(request, responseObserver);
-//            BALANA
-            String balanaEvaluation = pdp.evaluate(request.getXacmlRequest());
 
-////            AT&T
+////           ****************************** BALANA ******************************
+
+            String balanaEvaluation = pdp.evaluate(request.getXacmlRequest());
+            System.out.println("EVALUATED REQUEST.\nBALANA OUTCOME: ");
+            System.out.println(balanaEvaluation);
+
+////           ****************************** AT&T ******************************
 //            Response attResponse = null;
 //            Request pepRequest = null;
 //            try {
@@ -153,7 +157,10 @@ public class PDPServer {
 //            }
 //            assert attResponse != null;
 
-////            AUTHZFORCE
+//            System.out.println("AT&T OUTCOME: ");
+//            System.out.println(attResponse);
+
+////          ******************************  AUTHZFORCE ******************************
 //            Response authzforceEvaluation = null;
 //            try {
 //                XmlUtils.XmlnsFilteringParser xacmlParserFactory = XacmlJaxbParsingUtils.getXacmlParserFactory(false).getInstance();
@@ -168,10 +175,7 @@ public class PDPServer {
 //
 //            assert authzforceEvaluation != null;
 
-            System.out.println("EVALUATED REQUEST.\nBALANA OUTCOME: ");
-            System.out.println(balanaEvaluation);
-//            System.out.println("AT&T OUTCOME: ");
-//            System.out.println(attResponse);
+//
 //            System.out.println("EVALUATED REQUEST.\nAUTHZFORCE OUTCOME: ");
 //            System.out.println(authzforceEvaluation);
 
