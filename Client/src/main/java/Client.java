@@ -5,11 +5,13 @@ import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import io.grpc.TlsChannelCredentials;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -21,8 +23,10 @@ public class Client {
 
     private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
     private static final String signatureAlg = "SHA256withRSA";
-    private static Role userRole = null;
-    private int userID = -1;
+    private static Role userRole = Role.ADMIN;
+    private int userID = 1;
+    private static RSAPrivateKey privateKey;
+    private static String certificate;
     private Random rand = new Random();
 //    private static String loggedUser = null;
 
@@ -122,6 +126,35 @@ public class Client {
                 .build();
 
 
+        try {
+            ByteString signature = ByteString.copyFrom(RSAOperations.sign(privateKey, patientInfo.toByteArray(), signatureAlg));
+
+            SignatureM signatureM = SignatureM.newBuilder()
+                    .setCryptAlgo(signatureAlg)
+                    .setNonce(rand.nextInt())
+                    .setSignature(signature)
+                    .build();
+
+
+
+            WritePatientInfoRequest request = WritePatientInfoRequest.newBuilder()
+                    .setPatientInfo(patientInfo)
+                    .setUserID(userID)
+                    .build();
+
+            WritePatientInfoReply reply = blockingStub.writePatientInfo(request);
+
+            boolean successful = reply.getOk();
+            if (successful){
+                System.out.println("Successfully created patient record!");
+            }else{
+                System.out.println("Problem creating patient record!");
+                //TODO error message acording to type
+            }
+        } catch (Exception e) {
+            System.out.println("Error signing with private key");
+        }
+
     }
 
     private void registerNewAccount (){
@@ -185,12 +218,10 @@ public class Client {
         }
     }
 
-    private void registerCertificate(String certificatePath, String privateKeyPath){
+    private void registerCertificate(){
         try {
             System.out.println("Registering certificate");
-            String certificateStr = RSAOperations.readFile(certificatePath);
             String nonce = Integer.toString(rand.nextInt());
-            RSAPrivateKey privateKey = RSAOperations.getPrivateKeyFromFile(privateKeyPath);
             byte[] signedNonce = RSAOperations.sign(privateKey, nonce.getBytes(), signatureAlg);
             SignatureM signature = SignatureM.newBuilder()
                     .setSignature(ByteString.copyFrom(signedNonce))
@@ -200,7 +231,7 @@ public class Client {
             //System.out.println(certificateStr);
             RegisterCertificateRequest request = RegisterCertificateRequest.newBuilder()
             //pass also id
-                    .setCertificate(certificateStr)
+                    .setCertificate(certificate)
                     .setNonce(nonce)
                     .setSignedNonce(signature)
                     .setUserId(userID)
@@ -220,7 +251,9 @@ public class Client {
         }
     }
 
+
     public static void main(String[] args) throws Exception {
+
 
         if (args.length < 2 || args.length == 4 || args.length > 5) {
             System.out.println("USAGE: Client host port [trustCertCollectionFilePath " +
@@ -228,6 +261,10 @@ public class Client {
                     "clientPrivateKeyFilePath are only needed if mutual auth is desired.");
             System.exit(0);
         }
+
+        //TODO get from arguments:
+        privateKey = RSAOperations.getPrivateKeyFromFile("../Keys/server.key");
+        certificate = RSAOperations.readFile("../Keys/server.crt");
 
         // If only defaults are necessary, you can use TlsChannelCredentials.create() instead of
         // interacting with the Builder.

@@ -15,6 +15,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.spec.InvalidKeySpecException;
@@ -273,6 +274,96 @@ public class ServerImpl {
         return false;
     }
 
+
+
+    public boolean writeRecord (int userId, PatientInfo patientInfo, SignatureM signatureM) {
+
+        //------------------------------ VERIFY SIGNATURE ------------------------------
+        try {
+            byte[] message = patientInfo.toByteArray();
+
+            PublicKey pubKey = RSAOperations.getCertificateFromPath(ServerTls.certificatesPath + userId).getPublicKey();
+
+            boolean signatureValid = RSAOperations.verify(pubKey, message, signatureM.getSignature().getBytes(), signatureM.getCryptAlgo());
+
+            if(!signatureValid){
+                System.out.println("Signature is not valid");
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.out.println("User does not have a certificate");
+            return false;
+        }
+
+        //------------------------------ CHECK IF PATIENT ALREADY EXISTS --------------
+        try {
+            PreparedStatement statement = con.prepareStatement("SELECT * from medical_records WHERE NameSurname = ?");
+            statement.setString(1,patientInfo.getNameSurname());
+            ResultSet res = statement.executeQuery();
+
+            if(res.next()) {
+                System.out.println("PATIENT WITH NAME " + patientInfo.getNameSurname() + " ALREADY EXISTS, SKIPPED");
+                return false;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        //------------------------------ STORE SIGNATURE ------------------------------
+        int signatureId = 0;
+        try {
+            Blob signBlob = con.createBlob();
+            signBlob.setBytes(1,signatureM.getSignature().getBytes());
+            PreparedStatement statement = con.prepareStatement("INSERT INTO signature (signerId, signature) VALUES (?,?)");
+            statement.setInt(1,userId);
+            statement.setBlob(2,signBlob);
+
+            if(statement.executeUpdate() != 1)
+                return false;
+
+            ResultSet rs = statement.getGeneratedKeys();
+            if (rs.next()) {
+                signatureId = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Problem storing signature in database");
+            return false;
+        }
+
+        System.out.println("Generated new signature, id: " + signatureId);
+
+        //------------------------------ STORE MEDICAL RECORD ------------------------------
+        try {
+            String nameSurname = patientInfo.getNameSurname();
+            String email = patientInfo.getEmail();
+            String homeAddress = patientInfo.getHomeAddress();
+            int healthNumber = patientInfo.getHealthNumber();
+            String healthHistory = patientInfo.getHealthHistory();
+            String allergies = patientInfo.getAllergies();
+            PreparedStatement statement = con.prepareStatement(
+                    "INSERT INTO medical_records (NameSurname, email, HomeAddress, HealthNumber, HealthHistory, Allergies, Signature) VALUES (?,?,?,?,?,?,?)");
+            statement.setString(1,nameSurname);
+            statement.setString(2,email);
+            statement.setString(3,homeAddress);
+            statement.setInt(4,healthNumber);
+            statement.setString(5,healthHistory);
+            statement.setString(6,allergies);
+            statement.setInt(7,signatureId);
+
+
+            if(statement.executeUpdate() == 1){
+                System.out.println("Successfully created medical record!");
+                return true;
+            }
+
+        } catch (SQLException e) {
+            //e.printStackTrace();
+            System.err.println("Problem inserting into medical_records table");
+        }
+        return false;
+    }
     /**
      *
      * @param xacmlReply an XML-formatted string coming from the PDP

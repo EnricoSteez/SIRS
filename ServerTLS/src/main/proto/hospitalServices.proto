@@ -8,6 +8,7 @@ service HospitalService {
   rpc Login(LoginRequest) returns (LoginReply) {}
   rpc Register(RegisterRequest) returns (RegisterReply) {}
   rpc RegisterCertificate(RegisterCertificateRequest) returns (RegisterCertificateReply) {}
+  rpc WritePatientInfo(WritePatientInfoRequest) returns(WritePatientInfoReply) {}
 }
 
 enum Role {
@@ -157,4 +158,8 @@ message WritePatientInfoRequest{
   Role role = 2;
   PatientInfo patientInfo = 3;
   SignatureM signature = 4;
+}
+
+message WritePatientInfoReply{
+  bool ok = 1;
 }
