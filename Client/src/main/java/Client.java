@@ -126,7 +126,7 @@ public class Client {
                 .build();
 
 
-        try {
+        /*try {
             ByteString signature = ByteString.copyFrom(RSAOperations.sign(privateKey, patientInfo.toByteArray(), signatureAlg));
 
             SignatureM signatureM = SignatureM.newBuilder()
@@ -154,7 +154,7 @@ public class Client {
             }
         } catch (Exception e) {
             System.out.println("Error signing with private key");
-        }
+        }*/
 
     }
 
@@ -179,7 +179,7 @@ public class Client {
                     "[5] => CLINICAL_ASSISTANT\n" +
                     "[6] => PORTER_VOLUNTEER\n" +
                     "[7] => WARD_CLERK\n" +
-                            "8: ADMIN"
+                    "[8] => ADMIN"
             );
             String roleInput = System.console().readLine();
             int selection;
@@ -200,6 +200,7 @@ public class Client {
             System.out.println("You have chosen:");
             System.out.println("USERNAME:" + username);
             System.out.println("PASSWORD:" + Arrays.toString(password));
+            assert role != null;
             System.out.println("ROLE:" + role.name());
 
 
@@ -256,9 +257,7 @@ public class Client {
 
 
         if (args.length < 2 || args.length == 4 || args.length > 5) {
-            System.out.println("USAGE: Client host port [trustCertCollectionFilePath " +
-                    "[clientCertChainFilePath clientPrivateKeyFilePath]]\n  Note: clientCertChainFilePath and " +
-                    "clientPrivateKeyFilePath are only needed if mutual auth is desired.");
+            System.out.println("USAGE: Client host port trustCertCollectionFilePath ");
             System.exit(0);
         }
 
@@ -335,106 +334,118 @@ public class Client {
 //          ************************************************** PATIENTS' MEDICAL RECORDS RETRIEVAL **************************************************
 
             //AFTER SUCCESSFUL LOGIN, A USER INTERACTION LOOP STARTS UNTIL LOGOUT
-            int option = 0;
-            while(option != -1){
-                System.out.println("Options:");
-                //TODO register certificate do by default when server doesnt have
-                System.out.println("[1] -> Register certificate");
-                System.out.println("[2] -> Read patient record");
-                System.out.println("[3] -> Write patient record");
-                String choice = System.console().readLine();
+            System.out.println("Insert PatientID to retrieve info, -1 to logout");
+            int id;
+            while(true) {
                 try {
-                    nextOp = Integer.parseInt(choice);
-                } catch (NumberFormatException e) {
-                    System.out.println();
-                    System.out.println(choice + "Choose a valid option");
+                    id = Integer.parseInt(System.console().readLine());
+                } catch (Exception e) {
                     continue;
                 }
+                break;
+            }
 
-                if(nextOp == 1)
-                    client.registerCertificate();
-                else if(nextOp == 2)
-                    tryRetrievePatientData(client);
-                else if(nextOp == 3)
-                    client.writeMedicalRecord();
-                else
-                    System.out.println(choice + "Choose a valid option");
+            while (id > 0){ //DO STUFF UNTIL LOGOUT
+                boolean legalSelections = false;
+                List<Integer> selectedNumbers = new ArrayList<Integer>();
+
+                while (!legalSelections) { //REPEAT SELECTION UNTIL VALID
+                    legalSelections = true;
+                    int countRead = 0;
+                    int countWrite = 0;
+
+                    System.out.println("CHOOSE OPTIONS FROM ONLY ONE OF THE GROUPS\n\n");
+                    System.out.println("****************************** RETRIEVE PATIENTS INFO ******************************\n");
+                    System.out.println("[1] -> Name Surname");
+                    System.out.println("[2] -> Personal Information (home address, email, health number)");
+                    System.out.println("[3] -> Health Issues");
+                    System.out.println("[4] -> Prescribed Medications");
+                    System.out.println("[5] -> Health History");
+                    System.out.println("[6] -> Allergies");
+                    System.out.println("[7] -> Past visits history");
+                    System.out.println("[8] -> Lab Results");
+                    System.out.println("[9] -> Complete Medical Records");
+                    System.out.println("Insert either a list of selections or 9, followed by ENTER.\nDo not insert 9 along with other selections, please:");
+                    System.out.println();
+                    System.out.println("****************************** UPDATE PATIENTS INFO ******************************\n");
+                    System.out.println("[10] -> Name Surname");
+                    System.out.println("[11] -> Personal Information (home address, email, health number)");
+                    System.out.println("[12] -> Health Issues");
+                    System.out.println("[13] -> Prescribed Medications");
+                    System.out.println("[14] -> Health History");
+                    System.out.println("[15] -> Allergies");
+                    System.out.println("[16] -> Past visits history");
+                    System.out.println("[17] -> Lab Results");
+                    System.out.println("Insert a single number, followed by ENTER. (you can only write a single field at a time)");
+
+                    String selections = System.console().readLine();
+                    StringTokenizer tokenizer = new StringTokenizer(selections);
+
+                    if (tokenizer.countTokens() > 0) {
+                        while (tokenizer.hasMoreTokens()) {
+                            String token = tokenizer.nextToken();
+                            try {
+                                int oneSelection = Integer.parseInt(token);
+                                selectedNumbers.add(oneSelection);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                legalSelections = false;
+                                System.out.println("'" + token + "' is not a valid selection! Select again...");
+                            }
+
+                            for(int i : selectedNumbers) {
+                                if(i>0 && i<10)
+                                    countRead++;
+                                else if(i>=10 && i<18)
+                                    countWrite++;
+                                else
+                                    legalSelections = false;
+                            }
+                            if(countRead>0 && countWrite>0) {
+                                System.out.println("You cannot read and write at the same time");
+                                legalSelections=false;
+                            }
+                            if(countWrite>0){
+                                System.out.println("You can only write one field at a time { for now ;) }");
+                                legalSelections=false;
+                            }
+                            if((selectedNumbers.contains(9) || selectedNumbers.contains(18)) && selectedNumbers.size()>1){
+                                System.out.println("If you select more than a number, the selections must not include 9 nor 18!");
+                                legalSelections=false;
+                            }
+                        }
+                    } else { // NO SELECTIONS
+                        System.out.println("You must select something");
+                        legalSelections = false;
+                    }
+                    //EVENTUALLY THE USER WILL SELECT SOMETHING VALID, THE REQUEST TO THE SERVER IS THEN MADE
+                    if(countRead>0){ //USER CHOSE TO RETRIEVE STUFF
+                        PatientInfoReply reply = client.retrievePatientInfo(id, selectedNumbers);
+                        if(reply.getPermission())
+                            client.printRecords(reply.getRecords());
+                        else {
+                            System.out.println("PERMISSION DENIED");
+                            System.out.println(reply.getPdpAdvice());
+                        }
+                    } else { //USER CHOSE TO WRITE STUFF, I already checked that there is no intersection between read and write choices
+                        //todo PROCEDURE FOR WRITING RECORDS: *** P E D A N T I C ***
+                    }
+
+                }
+                System.out.println("\n\nInsert another PatientID, -1 to logout");
+                try {
+                    id = Integer.parseInt(System.console().readLine());
+                } catch (Exception e){
+                    id = -1;
+                }
             }
         } finally {
             channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 
-    private static void tryRetrievePatientData(Client client){
-        System.out.println("Insert PatientID to retrieve info, -1 to stop");
-        int id;
-        while(true) {
-            try {
-                id = Integer.parseInt(System.console().readLine());
-            } catch (Exception e) {
-                continue;
-            }
-            break;
-        }
 
-        while (id > 0){ //DO STUFF UNTIL LOGOUT
-            boolean legalSelections = false;
-            List<Integer> selectedNumbers = new ArrayList<Integer>();
-
-            while (!legalSelections) { //REPEAT SELECTION UNTIL VALID
-                legalSelections = true;
-
-                System.out.println("Select the information you would like to retrieve:");
-                System.out.println("Options:");
-                System.out.println("[1] -> Name Surname");
-                System.out.println("[2] -> Personal Information (home address, email, health number)");
-                System.out.println("[3] -> Health Issues");
-                System.out.println("[4] -> Prescribed Medications");
-                System.out.println("[5] -> Health History");
-                System.out.println("[6] -> Allergies");
-                System.out.println("[7] -> Past visits history");
-                System.out.println("[8] -> Complete Medical Records");
-                System.out.println("Insert either a list of selections or 8, followed by ENTER.\nDo not insert 8 along with other selections, please:");
-                String selections = System.console().readLine();
-                StringTokenizer tokenizer = new StringTokenizer(selections);
-
-                if (tokenizer.countTokens() > 0) {
-                    while (tokenizer.hasMoreTokens()) {
-                        String token = tokenizer.nextToken();
-                        try {
-                            int oneSelection = Integer.parseInt(token);
-                            selectedNumbers.add(oneSelection);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            legalSelections = false;
-                            System.out.println("'" + token + "' is not a valid selection! Select again...");
-                        }
-                        if(selectedNumbers.contains(8) && selectedNumbers.size()>1){
-                            System.out.println("If you select more than a number, the selections must not include 8!");
-                            legalSelections=false;
-                        }
-                    }
-                } else { // NO SELECTIONS
-                    System.out.println("You must select something");
-                    legalSelections = false;
-                }
-                //EVENTUALLY THE USER WILL SELECT SOMETHING VALID, THE REQUEST TO THE SERVER IS THEN MADE
-                PatientInfoReply reply = client.retrievePatientInfo(id, selectedNumbers);
-                if(reply.getPermission())
-                    client.printRecords(reply.getRecords());
-                else {
-                    System.out.println("PERMISSION DENIED");
-                    System.out.println(reply.getPdpAdvice());
-                }
-            }
-            System.out.println("Insert another PatientID to retrieve info, -1 to stop");
-            try {
-                id = Integer.parseInt(System.console().readLine());
-            } catch (Exception e){
-                id = -1;
-            }
-        }
-    }
+    
 
     private byte[] toBytes(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);

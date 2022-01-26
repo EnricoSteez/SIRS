@@ -51,8 +51,8 @@ message MedicalRecords {
   string healthHistory = 6;
   string allergies = 7;
   repeated VisitDate visitsHistory = 8;
-  bool permitted = 9;
   int32 patientId = 10;
+  repeated string labResults = 11;
 }
 
 message PersonalData {
@@ -132,7 +132,17 @@ message PatientInfo{
 message WritePatientInfoRequest{
   int32  userID = 1;
   Role role = 2;
-  PatientInfo patientInfo = 3;
+  oneof fields {
+    string nameSurname = 10;
+    PersonalData personalData = 11;
+    string problems = 12;
+    string medications = 13;
+    string healthHistory = 14;
+    string allergies = 15;
+    VisitDate visitsHistory = 16;
+    int32 patientId = 17;
+    string labResults = 18;
+  }
   SignatureM signature = 4;
 }
 
