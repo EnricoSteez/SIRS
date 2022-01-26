@@ -97,6 +97,33 @@ public class Client {
         return reply;
     }
 
+    private void writeMedicalRecord(){
+        System.out.println("--------------WRITING MEDICAL RECORD--------------");
+        System.out.println("Patient name and surname:");
+        String nameSurname = System.console().readLine();
+        System.out.println("Patient email:");
+        String email = System.console().readLine();
+        System.out.println("Patient home address:");
+        String homeAddress = System.console().readLine();
+        System.out.println("Patient health number:");
+        int healthNumber = Integer.parseInt(System.console().readLine());
+        System.out.println("Patient health history:");
+        String healthHistory = System.console().readLine();
+        System.out.println("Patient allergies:");
+        String allergies = System.console().readLine();
+
+        PatientInfo patientInfo = PatientInfo.newBuilder()
+                .setNameSurname(nameSurname)
+                .setEmail(email)
+                .setHomeAddress(homeAddress)
+                .setHealthNumber(healthNumber)
+                .setHealthHistory(healthHistory)
+                .setAllergies(allergies)
+                .build();
+
+
+    }
+
     private void registerNewAccount (){
         boolean successfulRegister = false;
 
@@ -164,9 +191,9 @@ public class Client {
             String certificateStr = RSAOperations.readFile(certificatePath);
             String nonce = Integer.toString(rand.nextInt());
             RSAPrivateKey privateKey = RSAOperations.getPrivateKeyFromFile(privateKeyPath);
-            String signedNonce = RSAOperations.sign(privateKey, nonce, signatureAlg);
+            byte[] signedNonce = RSAOperations.sign(privateKey, nonce.getBytes(), signatureAlg);
             SignatureM signature = SignatureM.newBuilder()
-                    .setSignature(signedNonce)
+                    .setSignature(ByteString.copyFrom(signedNonce))
                     .setCryptAlgo(signatureAlg)
                     .setNonce(rand.nextInt())
                     .build();
@@ -194,11 +221,6 @@ public class Client {
     }
 
     public static void main(String[] args) throws Exception {
-
-//        registerCertificate("../Keys/server.crt");
-    }
-
-    public static void main2(String[] args) throws Exception {
 
         if (args.length < 2 || args.length == 4 || args.length > 5) {
             System.out.println("USAGE: Client host port [trustCertCollectionFilePath " +

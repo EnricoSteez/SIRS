@@ -1,7 +1,4 @@
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -55,6 +52,17 @@ public class RSAOperations {
 		return cert;
 	}
 
+	public static void writeFile(String message, String name){
+		try {
+			FileWriter myWriter = new FileWriter(name);
+			myWriter.write(message);
+			myWriter.close();
+		} catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+	}
+
 	public static String readFile(String filename) throws IOException {
 		return new String(Files.readAllBytes(Paths.get(filename)), Charset.defaultCharset());
 	}
@@ -75,6 +83,20 @@ public class RSAOperations {
 		sign.initSign(privateKey);
 		sign.update(message.getBytes("UTF-8"));
 		return new String(Base64.getEncoder().encodeToString((sign.sign())));
+	}
+
+	public static byte[] sign(PrivateKey privateKey, byte[] message, String algorithm) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, UnsupportedEncodingException {
+		Signature sign = Signature.getInstance(algorithm);
+		sign.initSign(privateKey);
+		sign.update(message);
+		return sign.sign();
+	}
+
+	public static boolean verify(PublicKey publicKey, byte[] message, byte[] signature, String algorithm) throws SignatureException, NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeyException {
+		Signature sign = Signature.getInstance(algorithm);
+		sign.initVerify(publicKey);
+		sign.update(message);
+		return sign.verify(signature);
 	}
 
 

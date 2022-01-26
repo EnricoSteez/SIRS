@@ -142,3 +142,19 @@ message SignatureM{
   string cryptAlgo = 2;
   int32 nonce = 3;
 }
+
+message PatientInfo{
+  string nameSurname = 1;
+  string email = 2;
+  string homeAddress = 3;
+  int32 healthNumber = 4;
+  string healthHistory = 5;
+  string allergies = 6;
+}
+
+message WritePatientInfoRequest{
+  int32  userID = 1;
+  Role role = 2;
+  PatientInfo patientInfo = 3;
+  SignatureM signature = 4;
+}

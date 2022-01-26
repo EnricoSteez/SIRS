@@ -193,12 +193,12 @@ public class ServerImpl {
         return patientInfoReply.build();
     }
 
-    public boolean registerCertificate(int userId, String certificate, String nonce, SignatureM signature){
+    public boolean registerCertificate(int userId, String certificate, byte[] nonce, SignatureM signature){
 
         try {
             //check if signature matches certificate
             Certificate cert = RSAOperations.getCertificateFromString(certificate);
-            boolean certMatches = RSAOperations.verify(cert.getPublicKey(), nonce, signature.getSignature(), signature.getCryptAlgo());
+            boolean certMatches = RSAOperations.verify(cert.getPublicKey(), nonce, signature.getSignature().getBytes(), signature.getCryptAlgo());
             if(!certMatches){
                 return false;
             }

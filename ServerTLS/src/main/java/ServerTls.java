@@ -149,7 +149,7 @@ public class ServerTls {
             super.registerCertificate(request, responseObserver);
 
             boolean ok = serverImpl.registerCertificate(request.getUserId(), request.getCertificate(),
-                    request.getNonce(), request.getSignedNonce());
+                    request.getNonce().getBytes(), request.getSignedNonce());
             RegisterCertificateReply reply = RegisterCertificateReply.newBuilder().setOk(ok).build();
             responseObserver.onNext(reply);
             responseObserver.onCompleted();

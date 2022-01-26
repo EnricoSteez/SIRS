@@ -85,6 +85,20 @@ public class RSAOperations {
 		return new String(Base64.getEncoder().encodeToString((sign.sign())));
 	}
 
+	public static byte[] sign(PrivateKey privateKey, byte[] message, String algorithm) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, UnsupportedEncodingException {
+		Signature sign = Signature.getInstance(algorithm);
+		sign.initSign(privateKey);
+		sign.update(message);
+		return sign.sign();
+	}
+
+	public static boolean verify(PublicKey publicKey, byte[] message, byte[] signature, String algorithm) throws SignatureException, NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeyException {
+		Signature sign = Signature.getInstance(algorithm);
+		sign.initVerify(publicKey);
+		sign.update(message);
+		return sign.verify(signature);
+	}
+
 
 	public static boolean verify(PublicKey publicKey, String message, String signature, String algorithm) throws SignatureException, NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeyException {
 		Signature sign = Signature.getInstance(algorithm);
