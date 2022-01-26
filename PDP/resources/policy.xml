@@ -11,7 +11,7 @@
                     </Match>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                         <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">DOCTOR</AttributeValue>
-                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
                     </Match>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                         <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">read</AttributeValue>
@@ -44,7 +44,7 @@
                     </AnyOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                         <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">NURSE</AttributeValue>
-                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
                     </Match>
                 </AllOf>
             </AnyOf>
@@ -81,7 +81,7 @@
                     </AnyOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                         <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">PATIENT_SERVICES_ASSISTANT</AttributeValue>
-                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
                     </Match>
                 </AllOf>
             </AnyOf>
@@ -114,7 +114,7 @@
                     </AnyOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                         <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">CLINICAL_ASSISTANT</AttributeValue>
-                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
                     </Match>
                 </AllOf>
             </AnyOf>
@@ -155,7 +155,7 @@
                     </AnyOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                         <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">PORTER_VOLUNTEER</AttributeValue>
-                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
                     </Match>
                 </AllOf>
             </AnyOf>
@@ -175,15 +175,15 @@
                     <AnyOf>
                         <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                             <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">PORTER_VOLUNTEER</AttributeValue>
-                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
                         </Match>
                         <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                             <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">CLINICAL_ASSISTANT</AttributeValue>
-                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
                         </Match>
                         <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
                             <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">PATIENT_SERVICES_ASSISTANT</AttributeValue>
-                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
+                            <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true" />
                         </Match>
                     </AnyOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">

@@ -67,10 +67,22 @@
             <artifactId>h2</artifactId>
             <version>2.1.210</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId></groupId>-->
-<!--            <artifactId></artifactId>-->
-<!--        </dependency>-->
+
+        <!-- https://mvnrepository.com/artifact/com.att.research.xacml/xacml -->
+        <dependency>
+            <groupId>com.att.research.xacml</groupId>
+            <artifactId>xacml</artifactId>
+            <version>3.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.ow2.authzforce/authzforce-ce-core-pdp-engine -->
+        <dependency>
+            <groupId>org.ow2.authzforce</groupId>
+            <artifactId>authzforce-ce-core-pdp-engine</artifactId>
+            <version>17.1.2</version>
+        </dependency>
+
+
 
     </dependencies>
 
