@@ -2,8 +2,8 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -12,8 +12,16 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.StringReader;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -68,7 +76,7 @@ public class ServerImpl {
 
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/main","root","ga38");
+                "jdbc:mysql://localhost:3306/sirs","root",null);
             
             // sirs is the database name, root is the user and last parameter is the password: use null if no password is set!!
         } catch (ClassNotFoundException|SQLException e) {
@@ -161,7 +169,7 @@ public class ServerImpl {
         AccessControlReply reply = blockingStub.validateAccess(request);
         String xacmlReply = reply.getXacmlReply();
         System.out.println("RECEIVED XACML REPLY:");
-        System.out.println(xacmlReply);
+        System.out.println(toPrettyString(xacmlReply,2));
 
         PatientInfoReply.Builder patientInfoReply = getAccessControlOutcome(xacmlReply);
         //this builder that I got from the outcome has already the permission bit and, eventually, the advice, set.
@@ -173,21 +181,26 @@ public class ServerImpl {
 
             //TEMPORARY:
             LocalDate date = LocalDate.now();
+            List<String> medications = Arrays.asList("Paracetamol","Nixar");
+            VisitDate visitDate = VisitDate.newBuilder()
+                    .setDay(date.getDayOfMonth())
+                    .setMonth(date.getMonthValue())
+                    .setYear(date.getYear())
+                    .build();
+
+            List<VisitDate> dates = Collections.singletonList(visitDate);
+            PersonalData data = PersonalData.newBuilder()
+                    .setEmail("enrico.giorio@tecnico.ulisboa.pt").build();
+
             patientInfoReply.setRecords(
                     MedicalRecords.newBuilder()
                             .setAllergies("Dog's hair")
                             .setPatientId(patientID)
                             .setHealthHistory("Heart attack on 10/10/2010")
                             .setNameSurname("Enrico Giorio")
-                            .setPersonalData(PersonalData.newBuilder()
-                                    .setEmail("enrico.giorio@tecnico.ulisboa.pt").build())
-                            .setMedications(1,"Paracetamol")
-                            .setMedications(2,"Nixar")
-                            .setVisitsHistory(1, VisitDate.newBuilder()
-                                    .setDay(date.getDayOfMonth())
-                                    .setMonth(date.getMonthValue())
-                                    .setYear(date.getYear())
-                                    .build() )
+                            .setPersonalData(data)
+                            .addAllMedications(medications)
+                            .addAllVisitsHistory(dates)
             );
         } //else do nothing, the rest of the reply is already set
         //IF PERMISSION IS DENIED, THE PERMISSION BIT AND THE ADVICE ARE ALREADY SET BY THE getAccessControlOutcome() FUNCTION
@@ -372,30 +385,31 @@ public class ServerImpl {
     private PatientInfoReply.Builder getAccessControlOutcome(String xacmlReply) {
         PatientInfoReply.Builder res = PatientInfoReply.newBuilder();
 
-        try {
 //          ------------------------------ PARSE DECISION OUTCOME ------------------------------
-            Document document = builder.parse(new InputSource(new StringReader(xacmlReply)));
-            Element rootElement = document.getDocumentElement();
 
-            Node decision = rootElement.getElementsByTagName("Decision").item(0); //ONLY ONE
-            String decisionValue = decision.getNodeValue();
-            System.out.println("PARSED DECISION IS: " + decisionValue);
+        DocumentBuilderFactory factory =
+                DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = null;
+        try {
+            builder = factory.newDocumentBuilder();
+            ByteArrayInputStream input = new ByteArrayInputStream(
+                    xacmlReply.getBytes(StandardCharsets.UTF_8));
+            Document doc = builder.parse(input);
 
-            if(decisionValue.equals("Permit")) {
+            String decision = doc.getElementsByTagName("Decision").item(0).getTextContent();
+
+            if(decision.equals("Permit")) {
                 res.setPermission(true);
             }
             else { //ANYTHING OTHER THAN PERMIT IS DENY
-                Node advice = rootElement.getElementsByTagName("Advice").item(0); //ONLY ONE
-                String adviceMessage = advice.getFirstChild().getNodeValue();
-                System.out.println("ADVICE IS: " + adviceMessage);
-                res.setPermission(false).setPdpAdvice(adviceMessage);
+                String advice = doc.getElementsByTagName("AttributeAssignment").item(0).getTextContent(); //ONLY ONE
+                System.out.println("ADVICE IS: " + advice);
+                res.setPermission(false).setPdpAdvice(advice);
             }
-
-        } catch (SAXException|IOException e) {
+        } catch (ParserConfigurationException | IOException | SAXException e) {
             e.printStackTrace();
-            System.err.println("ERROR CREATING A DOCUMENT OUT OF THE XACML REPLY");
-            System.exit(0);
         }
+
 
         return res;
     }
@@ -462,6 +476,42 @@ public class ServerImpl {
                 "</Request>");
 
         return request.toString();
+    }
+
+    private String toPrettyString(String xml, int indent) {
+        try {
+            // Turn xml string into a document
+            Document document = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(new InputSource(new ByteArrayInputStream(xml.getBytes("utf-8"))));
+
+            // Remove whitespaces outside tags
+            document.normalize();
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            NodeList nodeList = (NodeList) xPath.evaluate("//text()[normalize-space()='']",
+                    document,
+                    XPathConstants.NODESET);
+
+            for (int i = 0; i < nodeList.getLength(); ++i) {
+                Node node = nodeList.item(i);
+                node.getParentNode().removeChild(node);
+            }
+
+            // Setup pretty print options
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            transformerFactory.setAttribute("indent-number", indent);
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+            // Return pretty print xml string
+            StringWriter stringWriter = new StringWriter();
+            transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
+            return stringWriter.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
