@@ -65,6 +65,13 @@ public class ServerTls {
         }
     }
 
+    private static void checkCertificatesDir(){
+        File directory = new File(certificatesPath);
+        if (! directory.exists()){
+            directory.mkdir();
+        }
+    }
+
     /**
      * Main launches the server from the command line.
      */
@@ -75,6 +82,9 @@ public class ServerTls {
                     "USAGE: ServerTls port certChainFilePath privateKeyFilePath PDPaddress:PDPport");
             System.exit(0);
         }
+
+        //check if it is needed to create a Certificates Directory
+        checkCertificatesDir();
 
         // If only providing a private key, you can use TlsServerCredentials.create() instead of
         // interacting with the Builder.
