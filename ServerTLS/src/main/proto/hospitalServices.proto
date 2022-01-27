@@ -104,15 +104,14 @@ message RegisterReply {
   bool ok = 1;
 }
 
-
 message WritePatientInfoRequest{
   int32  userID = 1;
   Role role = 2;
   oneof fields {
     string nameSurname = 10;
     PersonalData personalData = 11;
-    string problem = 12;
-    string medication = 13;
+    string problems = 12;
+    string medications = 13;
     string healthHistoryRecord = 14;
     string allergy = 15;
     VisitDate visit = 16;
