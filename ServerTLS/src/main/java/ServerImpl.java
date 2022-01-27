@@ -300,6 +300,18 @@ public class ServerImpl {
         }
     }
 
+    private boolean checkIfPatientExists(int patientID){
+        try {
+            PreparedStatement statement = con.prepareStatement("SELECT * FROM medical_records WHERE PatientID = ?");
+            statement.setInt(1,patientID);
+            ResultSet res = statement.executeQuery();
+            return res.next();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return false;
+    }
+
     public PatientInfoReply retrievePatientInfo (int patientID, Role whoami, List<Integer> selectionsList) {
         String xacmlRequest = createRequestString(whoami, selectionsList, "read");
         System.out.println("CREATING ACCESS REQUEST STRING:");
@@ -318,30 +330,10 @@ public class ServerImpl {
 
         if(patientInfoReply.getPermission()) { //IF PERMIT
 
-            //TEMPORARY:
-            /*LocalDate date = LocalDate.now();
-            List<String> medications = Arrays.asList("Paracetamol","Nixar");
-            VisitDate visitDate = VisitDate.newBuilder()
-                    .setDay(date.getDayOfMonth())
-                    .setMonth(date.getMonthValue())
-                    .setYear(date.getYear())
-                    .build();
-
-            List<VisitDate> dates = Collections.singletonList(visitDate);
-            PersonalData data = PersonalData.newBuilder()
-                    .setEmail("enrico.giorio@tecnico.ulisboa.pt").build();
-
-
-            patientInfoReply.setRecords(
-                    MedicalRecords.newBuilder()
-                            .setAllergies("Dog's hair")
-                            .setPatientId(patientID)
-                            .setHealthHistory("Heart attack on 10/10/2010")
-                            .setNameSurname("Enrico Giorio")
-                            .setPersonalData(data)
-                            .addAllMedications(medications)
-                            .addAllVisitsHistory(dates)
-            );*/
+            if(!checkIfPatientExists(patientID)){
+                //TODO return code saying that fails
+                return patientInfoReply.build();
+            }
 
             MedicalRecords.Builder mRecordsBuilder = MedicalRecords.newBuilder();
             if(selectionsList.contains(9)){
@@ -570,6 +562,11 @@ public class ServerImpl {
                 insertPatientInfo(request, writeBuilder);
             }
         }else{
+            //If want to write on specific patient, and said patient doesnt exist
+            if(!checkIfPatientExists(request.getPatientID())){
+                writeBuilder.setOk(false);
+                return;
+            }
             if(request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.LABRESULT ||
                     request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.MEDICATIONS ||
                     request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.PROBLEMS ||
@@ -735,103 +732,7 @@ public class ServerImpl {
         return false;
     }
 
-
-
-    public boolean writeRecord (int userId, PatientInfo patientInfo, SignatureM signatureM) {
-
-        //------------------------------ VERIFY SIGNATURE ------------------------------
-        try {
-            byte[] message = patientInfo.toByteArray();
-
-            System.out.println("\n\nRetrieving certificate in path: " + ServerTls.certificatesPath + userId + ".crt");
-
-            System.out.println("Signing with: " + signatureM.getCryptAlgo());
-
-            PublicKey pubKey = RSAOperations.getCertificateFromPath(ServerTls.certificatesPath + userId + ".crt").getPublicKey();
-
-            boolean signatureValid = RSAOperations.verify(pubKey, message, signatureM.getSignature().toByteArray(), signatureM.getCryptAlgo());
-
-            if(!signatureValid){
-                System.out.println("Signature is not valid");
-                return false;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("User does not have a certificate");
-            return false;
-        }
-
-        //------------------------------ CHECK IF PATIENT ALREADY EXISTS --------------
-        try {
-            PreparedStatement statement = con.prepareStatement("SELECT * from medical_records WHERE NameSurname = ?");
-            statement.setString(1,patientInfo.getNameSurname());
-            ResultSet res = statement.executeQuery();
-
-            if(res.next()) {
-                System.out.println("PATIENT WITH NAME " + patientInfo.getNameSurname() + " ALREADY EXISTS, SKIPPED");
-                return false;
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        //------------------------------ STORE SIGNATURE ------------------------------
-        int signatureId = 0;
-        try {
-            Blob signBlob = con.createBlob();
-            signBlob.setBytes(1,signatureM.getSignature().toByteArray());
-            PreparedStatement statement = con.prepareStatement("INSERT INTO signature (signerId, signature) VALUES (?,?)", Statement.RETURN_GENERATED_KEYS);
-
-            statement.setInt(1,userId);
-            statement.setBlob(2,signBlob);
-
-            if(statement.executeUpdate() != 1)
-                return false;
-
-            ResultSet rs = statement.getGeneratedKeys();
-            if (rs.next()) {
-                signatureId = rs.getInt(1);
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Problem storing signature in database");
-            e.printStackTrace();
-            return false;
-        }
-
-        System.out.println("Generated new signature, id: " + signatureId);
-
-        //------------------------------ STORE MEDICAL RECORD ------------------------------
-        try {
-            String nameSurname = patientInfo.getNameSurname();
-            String email = patientInfo.getEmail();
-            String homeAddress = patientInfo.getHomeAddress();
-            int healthNumber = patientInfo.getHealthNumber();
-            String healthHistory = patientInfo.getHealthHistory();
-            String allergies = patientInfo.getAllergies();
-            PreparedStatement statement = con.prepareStatement(
-                    "INSERT INTO medical_records (NameSurname, email, HomeAddress, HealthNumber, HealthHistory, Allergies, Signature) VALUES (?,?,?,?,?,?,?)");
-            statement.setString(1,nameSurname);
-            statement.setString(2,email);
-            statement.setString(3,homeAddress);
-            statement.setInt(4,healthNumber);
-            statement.setString(5,healthHistory);
-            statement.setString(6,allergies);
-            statement.setInt(7,signatureId);
-
-
-            if(statement.executeUpdate() == 1){
-                System.out.println("Successfully created medical record!");
-                return true;
-            }
-
-        } catch (SQLException e) {
-            //e.printStackTrace();
-            System.err.println("Problem inserting into medical_records table");
-        }
-        return false;
-    }
+    
     /**
      *
      * @param xacmlReply an XML-formatted string coming from the PDP
