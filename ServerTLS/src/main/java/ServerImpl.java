@@ -43,6 +43,26 @@ public class ServerImpl {
     private static AccessControlServiceGrpc.AccessControlServiceBlockingStub blockingStub;
     private static DocumentBuilder builder;
     private final Map<Integer,String> MedicalRecordContent = new HashMap<Integer,String>();
+    /*
+                    System.out.println("[1] -> Name Surname");
+                    System.out.println("[2] -> Personal Information (home address, email, health number)");
+                    System.out.println("[3] -> Health Issues");
+                    System.out.println("[4] -> Prescribed Medications");
+                    System.out.println("[5] -> Health History");
+                    System.out.println("[6] -> Allergies");
+                    System.out.println("[7] -> Past visits history");
+                    System.out.println("[8] -> Lab Results");
+                    System.out.println("[9] -> Complete Medical Records");
+     */
+    private static final String RETRIEVE_NAME_SURNAME_P_ST = "SELECT NameSurname from medical_records WHERE PatientID = ?";
+    private static final String RETRIEVE_PERSONAL_DATA_P_ST = "SELECT email,HomeAddress,HealthNumber from medical_records WHERE PatientID = ?";
+    private static final String RETRIEVE_PROBLEMS_P_ST = "SELECT ProblemDescription from problems WHERE PatientID = ?";
+    private static final String RETRIEVE_MEDICATIONS_P_ST = "SELECT Medicine,Quantity,Description from medications WHERE PatientID = ?";
+    private static final String RETRIEVE_HEALTH_HISTORY_P_ST = "SELECT HealthHistory from medical_records WHERE PatientID = ?";
+    private static final String RETRIEVE_ALLERGIES_P_ST = "SELECT Allergies from medical_records WHERE PatientID = ?";
+    private static final String RETRIEVE_VISITS_HISTORY_P_ST = "SELECT VisitDate from clinic_visits WHERE PatientID = ?";
+    private static final String RETRIEVE_LAB_RESULTS_P_ST = "SELECT Results from lab_results WHERE PatientID = ?";
+    //private static final String RETRIEVE_ALL_DATA_P_ST = "";
 
     public static ServerImpl getInstance(String target) {
         if(instance == null)
@@ -160,6 +180,116 @@ public class ServerImpl {
         return reply.build();
     }
 
+
+    /**
+     * Retrieves patient info according to selectedOption and puts it to replyToPut.
+     * Assumes already has permission to retrieve info
+     */
+    private void retrieveChosenInfo(int patientID, int selectedOption, MedicalRecords.Builder replyToPut){
+
+        try {
+            String chosen = MedicalRecordContent.get(selectedOption);
+            if("NameSurname".equalsIgnoreCase(chosen)){
+                PreparedStatement statement = con.prepareStatement(RETRIEVE_NAME_SURNAME_P_ST);
+                statement.setInt(1,patientID);
+                ResultSet res = statement.executeQuery();
+                if(res.next()) {
+                    String nameSurname = res.getString("NameSurname");
+                    replyToPut.setNameSurname(nameSurname);
+                }
+            }
+            else if("PersonalData".equalsIgnoreCase(chosen)){
+                PreparedStatement statement = con.prepareStatement(RETRIEVE_PERSONAL_DATA_P_ST);
+                statement.setInt(1,patientID);
+                ResultSet res = statement.executeQuery();
+                if(res.next()) {
+                    String email = res.getString("email");
+                    String homeAddress = res.getString("HomeAddress");
+                    String healthNumber = res.getString("HealthNumber");
+                    PersonalData pdata = PersonalData.newBuilder()
+                            .setEmail(email)
+                            .setHomeAddress(homeAddress)
+                            .setHealthNumber(healthNumber)
+                            .build();
+                    replyToPut.setPersonalData(pdata);
+                }
+            }
+            else if("Problems".equalsIgnoreCase(chosen)){
+                PreparedStatement statement = con.prepareStatement(RETRIEVE_PROBLEMS_P_ST);
+                statement.setInt(1,patientID);
+                ResultSet res = statement.executeQuery();
+                int counter = 0;
+                while(res.next()) {
+                    String problem = res.getString("ProblemDescription");
+                    replyToPut.setProblems(counter, problem);
+                    counter++;
+                }
+            }
+            else if("Medications".equalsIgnoreCase(chosen)){
+                PreparedStatement statement = con.prepareStatement(RETRIEVE_MEDICATIONS_P_ST);
+                statement.setInt(1,patientID);
+                ResultSet res = statement.executeQuery();
+                int counter = 0;
+                while (res.next()) {
+                    String medicine = res.getString("Medicine");
+                    String quantity = res.getString("Quantity");
+                    String description = res.getString("Description");
+                    replyToPut.setMedications(counter, "Name: " + medicine + "\n Quantity: " + quantity + "\nDescription: " + description);
+                    counter++;
+                }
+            }
+            else if("HealthHistory".equalsIgnoreCase(chosen)){
+                PreparedStatement statement = con.prepareStatement(RETRIEVE_HEALTH_HISTORY_P_ST);
+                statement.setInt(1,patientID);
+                ResultSet res = statement.executeQuery();
+                if(res.next()) {
+                    String healthHistory = res.getString("HealthHistory");
+                    replyToPut.setHealthHistory(healthHistory);
+                }
+            }
+            else if("Allergies".equalsIgnoreCase(chosen)){
+                PreparedStatement statement = con.prepareStatement(RETRIEVE_ALLERGIES_P_ST);
+                statement.setInt(1,patientID);
+                ResultSet res = statement.executeQuery();
+                if(res.next()) {
+                    String allergies = res.getString("Allergies");
+                    replyToPut.setAllergies(allergies);
+                }
+            }
+            else if("VisitsHistory".equalsIgnoreCase(chosen)){
+                PreparedStatement statement = con.prepareStatement(RETRIEVE_VISITS_HISTORY_P_ST);
+                statement.setInt(1,patientID);
+                ResultSet res = statement.executeQuery();
+                int counter = 0;
+                while(res.next()) {
+                    java.sql.Date date = res.getDate("NameSurname");
+                    //TODO somehow get the right date from sql
+                    LocalDate lDate = date.toLocalDate();
+                    VisitDate vDate = VisitDate.newBuilder()
+                            .setDay(lDate.getDayOfMonth())
+                            .setMonth(lDate.getMonthValue())
+                            .setYear(lDate.getYear())
+                            .build();
+                    replyToPut.setVisitsHistory(counter, vDate);
+                    counter++;
+                }
+            }
+            else if("LabResults".equalsIgnoreCase(chosen)){
+                PreparedStatement statement = con.prepareStatement(RETRIEVE_LAB_RESULTS_P_ST);
+                statement.setInt(1,patientID);
+                ResultSet res = statement.executeQuery();
+                int counter = 0;
+                while(res.next()) {
+                    String labResults = res.getString("Results");
+                    replyToPut.setLabResults(counter, labResults);
+                    counter++;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public PatientInfoReply retrievePatientInfo (int patientID, Role whoami, List<Integer> selectionsList) {
         String xacmlRequest = createRequestString(whoami, selectionsList, "read");
         System.out.println("CREATING ACCESS REQUEST STRING:");
@@ -177,11 +307,9 @@ public class ServerImpl {
         //now I just need to add the actual records if the decision was Permit
 
         if(patientInfoReply.getPermission()) { //IF PERMIT
-            //TODO RETRIEVE MEDICAL RECORDS OF PATIENT patientID FROM DATABASE AND ADD TO REPLY
-//            patientInfoReply.setRecords() ...;
 
             //TEMPORARY:
-            LocalDate date = LocalDate.now();
+            /*LocalDate date = LocalDate.now();
             List<String> medications = Arrays.asList("Paracetamol","Nixar");
             VisitDate visitDate = VisitDate.newBuilder()
                     .setDay(date.getDayOfMonth())
@@ -193,6 +321,7 @@ public class ServerImpl {
             PersonalData data = PersonalData.newBuilder()
                     .setEmail("enrico.giorio@tecnico.ulisboa.pt").build();
 
+
             patientInfoReply.setRecords(
                     MedicalRecords.newBuilder()
                             .setAllergies("Dog's hair")
@@ -202,7 +331,19 @@ public class ServerImpl {
                             .setPersonalData(data)
                             .addAllMedications(medications)
                             .addAllVisitsHistory(dates)
-            );
+            );*/
+
+            MedicalRecords.Builder mRecordsBuilder = MedicalRecords.newBuilder();
+            if(selectionsList.contains(9)){
+                for(int i = 1; i <= 8; i++){
+                    retrieveChosenInfo(patientID, i, mRecordsBuilder);
+                }
+            }else{
+                for(int i : selectionsList){
+                    retrieveChosenInfo(patientID, i, mRecordsBuilder);
+                }
+            }
+            patientInfoReply.setRecords(mRecordsBuilder.build());
         } //else do nothing, the rest of the reply is already set
         //IF PERMISSION IS DENIED, THE PERMISSION BIT AND THE ADVICE ARE ALREADY SET BY THE getAccessControlOutcome() FUNCTION
         return patientInfoReply.build();
