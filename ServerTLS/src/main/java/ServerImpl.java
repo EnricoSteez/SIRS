@@ -106,7 +106,7 @@ public class ServerImpl {
 
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/main","root","ga38");
+                "jdbc:mysql://localhost:3306/sirs","root",null);
             
             // sirs is the database name, root is the user and last parameter is the password: use null if no password is set!!
         } catch (ClassNotFoundException|SQLException e) {

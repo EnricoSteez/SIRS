@@ -49,10 +49,10 @@ The following tables describe the read/write permissions associated to each acco
 ### Pandemic Mode
 | ROLE                        | READ                         | WRITE                                         |
 |-----------------------------|------------------------------|-----------------------------------------------|
-| Lab Employees               | Everything but personal data | Everything but personal data, visitsHistory,  |
-| Doctors                     | Everything but personal data | Everything but personal data, visitsHistory,  |
-| Nurses                      | Everything but personal data | Everything but personal data, visitsHistory,  |
-| Clinical Assistants         | Everything but personal data | Everything but personal data, visitsHistory,  |
+| Lab Employees               | Everything but personal data | Everything but personal data, visitsHistory   |
+| Doctors                     | Everything but personal data | Everything but personal data, visitsHistory   |
+| Nurses                      | Everything but personal data | Everything but personal data, visitsHistory   |
+| Clinical Assistants         | Everything but personal data | Everything but personal data, visitsHistory   |
 | Patient Services Assistants | Only personal data           | NOTHING                                       |
 | porters volunteers          | Only Problems                | NOTHING                                       |
 | ward clerks                 | Everything                   | Everything                                    |
@@ -75,7 +75,7 @@ The following list includes the technologies involved in eHealth:
 
 After deploying the network, the following tasks are necessary:
 
-* Create the **Database** with: <script src="https://gist.github.com/enricoSteez/07da598d13a3bbc28edfa1fc8b111b19.js"></script>
+* Create the **Database** with: https://gist.github.com/enricoSteez/07da598d13a3bbc28edfa1fc8b111b19
 * Start the **PDP** server with `mvn exec:java -Dexec.mainClass="PDPServer" [-Dexec.args="PandemicMode"]` : the default operational mode is "NormalMode", adding "PandemicMode" as an argument will switch the permissions to Pandemic Mode
 * Start the **Application Server** with `mvn exec:java -Dexec.mainClass="ServerTls" -Dexec.args="50440 ../Keys/server.crt ../Keys/server.key <PDPServer_IP>:8980"`
 * Start the **Client** with `mvn exec:java -Dexec.mainClass="Client" -Dexec.args="localhost 50440 ../Keys/rootCA.crt"`
@@ -84,8 +84,7 @@ After deploying the network, the following tasks are necessary:
 ### Prerequisites
 
 All the machines must be running Linux and have Java installed.
-
-In this section also include detailed instructions for installing additiona software the application is dependent upon (such as PostgreSQL database, for example). 
+The **Database** machine must have mysql installed
 
 ```
 Give installation command examples
@@ -98,7 +97,8 @@ Give step-by-step instructions on building and running the application on the de
 Describe the step.
 
 ```
-Give the command example
+sudo apt update
+sudo apt install mysql-server
 ```
 
 And repeat.
