@@ -121,7 +121,7 @@ public class PDPServer {
             System.exit(0);
         }
         String operationMode = "NormalMode";
-        if(args[0].equals("PandemicMode")) {
+        if(args.length == 1 && args[0].equals("PandemicMode")) {
             operationMode = "PandemicMode";
         }
 

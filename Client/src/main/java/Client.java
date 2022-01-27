@@ -442,11 +442,33 @@ public class Client {
                                 String surname = System.console().readLine();
                                 String nameSurname = name + surname;
                                 signature = ByteString.copyFrom(RSAOperations.sign(privateKey, nameSurname.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                                request.setNameSurname(nameSurname);
                                 break;
                             case 11:
+                                System.out.println("Insert Home Address:");
+                                String homeAddress = System.console().readLine();
+                                System.out.println("Insert Email:");
+                                String email = System.console().readLine();
+                                System.out.println("Insert Health Number:");
+                                String healthNumber = System.console().readLine();
+                                PersonalData personalData = PersonalData.newBuilder()
+                                        .setEmail(email)
+                                        .setHealthNumber(healthNumber)
+                                        .setHomeAddress(homeAddress)
+                                        .build();
+                                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, personalData.toByteArray(), signatureAlg));
+                                request.setPersonalData(personalData);
                                 break;
                             case 12:
+                                System.out.println("Insert new Health Issue:");
+                                String healthIssue = System.console().readLine();
+                                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, healthIssue.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                                request.setHealthHistory(healthIssue);
                             case 13:
+                                System.out.println("Insert new Medication:");
+                                String medication = System.console().readLine();
+                                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, medication.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                                request.setMedications(medication);
                                 break;
                             case 14:
                                 break;
@@ -466,7 +488,7 @@ public class Client {
                                 .setSignature(signature)
                                 .build();
 
-                        request.setSignature(SignatureM.parseFrom(signature));
+                        request.setSignature(signatureM);
 
                         WritePatientInfoReply reply = blockingStub.writePatientInfo(request.build());
 
