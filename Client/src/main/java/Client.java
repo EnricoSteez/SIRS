@@ -466,7 +466,7 @@ public class Client {
                                 .setSignature(signature)
                                 .build();
 
-                        request.setSignature(SignatureM.parseFrom(signature));
+                        request.setSignature(signatureM);
 
                         WritePatientInfoReply reply = blockingStub.writePatientInfo(request.build());
 
