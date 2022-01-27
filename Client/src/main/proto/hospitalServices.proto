@@ -21,6 +21,18 @@ enum Role {
   ADMIN = 7;
 }
 
+enum ErrorType{
+  NOT_AUTHORIZED = 0;
+  NOT_LOGGED_IN = 1;
+  PATIENT_DOES_NOT_EXIST = 2;
+  SQL_ERROR = 3;
+  USER_ALREADY_EXISTS = 4;
+  HASH_FAIL = 5;
+  UNKNOWN = 6;
+  SIGNATURE_DOESNT_MATCH = 7;
+  CERTIFICATE_NOT_VALID = 8;
+}
+
 // The request message containing the user's name.
 message HelloRequest {
   string name = 1;
@@ -38,10 +50,12 @@ message PatientInfoRequest {
 }
 message PatientInfoReply {
   bool permission = 2;
+  bool ok = 4;
   oneof result {
     MedicalRecords records = 1;
     string pdpAdvice = 3;
   }
+  ErrorType errorType = 5;
 }
 
 message MedicalRecords {
@@ -78,6 +92,7 @@ message LoginReply {
     SUCCESS = 0;
     WRONGUSER = 1;
     WRONGPASS = 2;
+    SQLERROR = 3;
   }
   //  enum Role {
   //    LAB_EMPLOYEE = 0;
@@ -99,10 +114,12 @@ message RegisterRequest {
   string username = 1;
   bytes password = 2;
   string token = 3;
+  Role chosenRole = 4;
 }
 
 message RegisterReply {
   bool ok = 1;
+  ErrorType errorType = 2;
 }
 
 message RegisterCertificateRequest{
@@ -114,6 +131,7 @@ message RegisterCertificateRequest{
 
 message RegisterCertificateReply{
   bool ok = 1;
+  ErrorType errorType = 2;
 }
 
 message SignatureM{
@@ -150,6 +168,8 @@ message WritePatientInfoRequest{
 message WritePatientInfoReply{
   bool ok = 1;
   int32 patientId = 2;
+  ErrorType errorType = 3;
+  string pdpAdvice = 4;
 }
 
 message CheckCertificateRequest{
@@ -159,5 +179,6 @@ message CheckCertificateRequest{
 message CheckCertificateReply{
   bool valid = 1;
   string certificate = 2;
+  ErrorType errorType = 3;
 }
 

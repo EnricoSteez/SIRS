@@ -141,8 +141,11 @@ public class ServerTls {
                 PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientId(), role, request.getSelectionsList());
                 responseObserver.onNext(reply);
             }else{
-                //TODO error code
-                PatientInfoReply reply = PatientInfoReply.newBuilder().setPermission(false).build();
+                PatientInfoReply reply = PatientInfoReply.newBuilder()
+                        .setPermission(false)
+                        .setErrorType(ErrorType.NOT_LOGGED_IN)
+                        .build();
+
                 responseObserver.onNext(reply);
             }
             responseObserver.onCompleted();
@@ -153,18 +156,29 @@ public class ServerTls {
         public void register (RegisterRequest request, StreamObserver<RegisterReply> responseObserver)  {
 //            super.register(request, responseObserver);
             AuthenticationManager.TokenValue tv = serverImpl.authManager.getUser(request.getToken());
+
             if(tv != null) {
-                Role role = tv.userRole;
-                String username = request.getUsername();
-                byte[] password = request.getPassword().toByteArray();
-                System.err.println("Received password byte[]: " + Arrays.toString(password));
-                System.err.println("Received Register Request with: " + username + " ~ " + Arrays.toString(password) + " ~ " + Role.DOCTOR);
-                boolean ok = serverImpl.registerUser(username, password, role);
-                RegisterReply reply = RegisterReply.newBuilder().setOk(ok).build();
-                responseObserver.onNext(reply);
+                //TODO do with PDP
+                if(tv.userRole != Role.ADMIN){
+                    RegisterReply reply = RegisterReply.newBuilder()
+                            .setOk(false)
+                            .setErrorType(ErrorType.NOT_AUTHORIZED)
+                            .build();
+                    responseObserver.onNext(reply);
+                }else{
+                    String username = request.getUsername();
+                    byte[] password = request.getPassword().toByteArray();
+                    System.err.println("Received password byte[]: " + Arrays.toString(password));
+                    System.err.println("Received Register Request with: " + username + " ~ " + Arrays.toString(password) + " ~ " + Role.DOCTOR);
+                    RegisterReply reply = serverImpl.registerUser(username, password, request.getChosenRole());
+                    responseObserver.onNext(reply);
+                }
+
             }else{
-                //TODO error code
-                RegisterReply reply = RegisterReply.newBuilder().setOk(false).build();
+                RegisterReply reply = RegisterReply.newBuilder()
+                        .setOk(false)
+                        .setErrorType(ErrorType.NOT_LOGGED_IN)
+                        .build();
                 responseObserver.onNext(reply);
             }
 
@@ -178,13 +192,14 @@ public class ServerTls {
             AuthenticationManager.TokenValue tv = serverImpl.authManager.getUser(request.getToken());
             if(tv != null){
                 int userId = tv.userId;
-                boolean ok = serverImpl.registerCertificate(userId, request.getCertificate(),
+                RegisterCertificateReply reply = serverImpl.registerCertificate(userId, request.getCertificate(),
                         request.getNonce().getBytes(), request.getSignedNonce());
-                RegisterCertificateReply reply = RegisterCertificateReply.newBuilder().setOk(ok).build();
                 responseObserver.onNext(reply);
             }else{
-                //TODO error code
-                RegisterCertificateReply reply = RegisterCertificateReply.newBuilder().setOk(false).build();
+                RegisterCertificateReply reply = RegisterCertificateReply.newBuilder()
+                        .setOk(false)
+                        .setErrorType(ErrorType.NOT_LOGGED_IN)
+                        .build();
                 responseObserver.onNext(reply);
             }
             responseObserver.onCompleted();
@@ -199,13 +214,13 @@ public class ServerTls {
             if(tv != null){
                 int userId = tv.userId;
                 Role role = tv.userRole;
-                System.out.println("Successfull login:");
                 WritePatientInfoReply reply = serverImpl.writePatientInfo(userId,role, request);
                 responseObserver.onNext(reply);
             }else{
-                //TODO error code
-                System.out.println("Couldnt login:");
-                WritePatientInfoReply reply = WritePatientInfoReply.newBuilder().setOk(false).build();
+                WritePatientInfoReply reply = WritePatientInfoReply.newBuilder()
+                        .setOk(false)
+                        .setErrorType(ErrorType.NOT_LOGGED_IN)
+                        .build();
                 responseObserver.onNext(reply);
             }
             responseObserver.onCompleted();
@@ -220,8 +235,10 @@ public class ServerTls {
                 CheckCertificateReply reply = serverImpl.checkCertificate(userId, request);
                 responseObserver.onNext(reply);
             }else{
-                //TODO error code
-                CheckCertificateReply reply = CheckCertificateReply.newBuilder().setValid(false).build();
+                CheckCertificateReply reply = CheckCertificateReply.newBuilder()
+                        .setValid(false)
+                        .setErrorType(ErrorType.NOT_LOGGED_IN)
+                        .build();
                 responseObserver.onNext(reply);
             }
             responseObserver.onCompleted();

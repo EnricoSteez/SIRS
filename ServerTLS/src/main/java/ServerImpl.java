@@ -185,6 +185,7 @@ public class ServerImpl {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            reply.setCode(LoginReply.Code.SQLERROR);
         }
 
         return reply.build();
@@ -331,7 +332,7 @@ public class ServerImpl {
         if(patientInfoReply.getPermission()) { //IF PERMIT
 
             if(!checkIfPatientExists(patientID)){
-                //TODO return code saying that fails
+                patientInfoReply.setErrorType(ErrorType.PATIENT_DOES_NOT_EXIST);
                 return patientInfoReply.build();
             }
 
@@ -348,6 +349,7 @@ public class ServerImpl {
             patientInfoReply.setRecords(mRecordsBuilder.build());
         } //else do nothing, the rest of the reply is already set
         //IF PERMISSION IS DENIED, THE PERMISSION BIT AND THE ADVICE ARE ALREADY SET BY THE getAccessControlOutcome() FUNCTION
+        patientInfoReply.setErrorType(ErrorType.NOT_AUTHORIZED);
         return patientInfoReply.build();
     }
 
@@ -366,6 +368,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
 
@@ -383,6 +386,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
 
@@ -400,6 +404,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
 
@@ -413,6 +418,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
                     break;
@@ -423,6 +429,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
 
@@ -438,6 +445,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
 
@@ -456,6 +464,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
                     break;
@@ -468,6 +477,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
                     break;
@@ -476,6 +486,7 @@ public class ServerImpl {
         } catch (SQLException e) {
             writeBuilder.setOk(false);
             System.out.println("SQL exception");
+            writeBuilder.setErrorType(ErrorType.SQL_ERROR);
             return;
         }
 
@@ -497,6 +508,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
                     break;
@@ -510,6 +522,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
                     break;
@@ -521,6 +534,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
                     break;
@@ -532,6 +546,7 @@ public class ServerImpl {
 
                     if(statement.executeUpdate() != 1){
                         writeBuilder.setOk(false);
+                        writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
                     break;
@@ -540,6 +555,7 @@ public class ServerImpl {
         } catch (SQLException e) {
             writeBuilder.setOk(false);
             System.out.println("SQL exception");
+            writeBuilder.setErrorType(ErrorType.SQL_ERROR);
             return;
         }
 
@@ -557,6 +573,7 @@ public class ServerImpl {
                     request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.VISIT){
                 writeBuilder.setOk(false);
                 System.out.println("Invalid id (0)");
+                writeBuilder.setErrorType(ErrorType.PATIENT_DOES_NOT_EXIST);
                 return;
             }else{
                 insertPatientInfo(request, writeBuilder);
@@ -565,6 +582,7 @@ public class ServerImpl {
             //If want to write on specific patient, and said patient doesnt exist
             if(!checkIfPatientExists(request.getPatientID())){
                 writeBuilder.setOk(false);
+                writeBuilder.setErrorType(ErrorType.PATIENT_DOES_NOT_EXIST);
                 return;
             }
             if(request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.LABRESULT ||
@@ -582,7 +600,21 @@ public class ServerImpl {
     public WritePatientInfoReply writePatientInfo (int userId, Role whoami, WritePatientInfoRequest request){
 
         WritePatientInfoReply.Builder writeBuilder = WritePatientInfoReply.newBuilder();
-        //TODO check permission
+
+        //CHECKING IF USER HAS PERMISSION:
+        String xacmlRequest = createRequestString(whoami, request.getFieldsCase(), "write");
+        AccessControlRequest acRequest = AccessControlRequest.newBuilder().setXacmlRequest(xacmlRequest).build();
+        AccessControlReply reply = blockingStub.validateAccess(acRequest);
+        String xacmlReply = reply.getXacmlReply();
+        PatientInfoReply.Builder patientInfoReply = getAccessControlOutcome(xacmlReply);
+        boolean permit = patientInfoReply.getPermission();
+        String advice = patientInfoReply.getPdpAdvice();
+        if(!permit){
+            writeBuilder.setOk(false);
+            writeBuilder.setErrorType(ErrorType.NOT_AUTHORIZED);
+            writeBuilder.setPdpAdvice(advice);
+            return writeBuilder.build();
+        }
 
         //CHECKING SIGNATURE:
         boolean signatureMatches = checkMessage(userId, convertToMessageBytes(request), request.getSignature());
@@ -590,6 +622,7 @@ public class ServerImpl {
         if(!signatureMatches){
             System.out.println("Signature didnt match");
             writeBuilder.setOk(false);
+            writeBuilder.setErrorType(ErrorType.SIGNATURE_DOESNT_MATCH);
             return writeBuilder.build();
         }
         System.out.println("Signature matched");
@@ -652,27 +685,27 @@ public class ServerImpl {
     }
 
 
-    public boolean registerCertificate(int userId, String certificate, byte[] nonce, SignatureM signature){
-
+    public RegisterCertificateReply registerCertificate(int userId, String certificate, byte[] nonce, SignatureM signature){
+        RegisterCertificateReply.Builder builder = RegisterCertificateReply.newBuilder();
         try {
             //check if signature matches certificate
             Certificate cert = RSAOperations.getCertificateFromString(certificate);
             boolean certMatches = RSAOperations.verify(cert.getPublicKey(), nonce, signature.getSignature().toByteArray(), signature.getCryptAlgo());
             if(!certMatches){
-                return false;
+                return builder.setErrorType(ErrorType.SIGNATURE_DOESNT_MATCH).setOk(false).build();
             }
 
             //register certificate to userId
             RSAOperations.writeFile(certificate, ServerTls.certificatesPath + userId + ".crt");
 
         } catch (Exception e) {
-            return false;
+            return builder.setErrorType(ErrorType.SQL_ERROR).setOk(false).build();
         }
-        return true;
+        return builder.setOk(true).build();
     }
 
-    public boolean registerUser (String username, byte[] password, Role role) {
-
+    public RegisterReply registerUser (String username, byte[] password, Role role) {
+        RegisterReply.Builder builder = RegisterReply.newBuilder();
         //------------------------------ CHECK IF USERNAME ALREADY EXISTS ------------------------------
         try {
             PreparedStatement statement = con.prepareStatement("SELECT * from Users WHERE Username = ?");
@@ -681,11 +714,12 @@ public class ServerImpl {
 
             if(res.next()) {
                 System.out.println("USERNAME " + username + " ALREADY EXISTS, SKIPPED");
-                return false;
+                return builder.setErrorType(ErrorType.USER_ALREADY_EXISTS).setOk(false).build();
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
+            return builder.setErrorType(ErrorType.SQL_ERROR).setOk(false).build();
         }
         //------------------------------ GENERATE SALT ------------------------------
         SecureRandom random = new SecureRandom();
@@ -697,7 +731,7 @@ public class ServerImpl {
         if(passHash == null)
         {
             System.err.println("Failed to hash password " + Arrays.toString(password) + " with salt " + Arrays.toString(salt));
-            return false;
+            return builder.setErrorType(ErrorType.HASH_FAIL).setOk(false).build();
         }
 
         //------------------------------ PREPEND ------------------------------
@@ -724,15 +758,16 @@ public class ServerImpl {
             System.err.println("The hashed password I will store is: " + Arrays.toString(blob.getBytes(1, recordToStore.length)));
 
             if(statement.executeUpdate() == 1)
-                return true;
+                return builder.setOk(true).build();
 
         } catch (SQLException e) {
             e.printStackTrace();
+            return builder.setErrorType(ErrorType.SQL_ERROR).setOk(false).build();
         }
-        return false;
+        return builder.setErrorType(ErrorType.UNKNOWN).setOk(false).build();
     }
 
-    
+
     /**
      *
      * @param xacmlReply an XML-formatted string coming from the PDP
@@ -834,6 +869,51 @@ public class ServerImpl {
         return request.toString();
     }
 
+    private String convertTypeToName(WritePatientInfoRequest.FieldsCase type){
+        switch (type) {
+            case NAMESURNAME:
+                return "NameSurname";
+            case PERSONALDATA:
+                return "PersonalData";
+            case PROBLEMS:
+                return "Problems";
+            case MEDICATIONS:
+                return "Medications";
+            case HEALTHHISTORYRECORD:
+                return "HealthHistory";
+            case ALLERGY:
+                return "Allergies";
+            case VISIT:
+                return "VisitsHistory";
+            case LABRESULT:
+                return "LabResults";
+        }
+        return "";
+    }
+
+    private String createRequestString (Role whoami, WritePatientInfoRequest.FieldsCase type, String action) {
+        StringBuilder request = new StringBuilder(
+                "<Request xmlns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\" CombinedDecision=\"false\" ReturnPolicyIdList=\"false\">" +
+                        "     <Attributes Category=\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\">" +
+                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:subject:subject-id\" IncludeInResult=\"false\">" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + whoami + "</AttributeValue>" +
+                        "          </Attribute>" +
+                        "     </Attributes>" +
+                        "     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">" +
+                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + convertTypeToName(type) + "</AttributeValue>" +
+                        "          </Attribute>" +
+                        "</Attributes>" +
+                        "     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\">" +
+                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\" IncludeInResult=\"false\">" +
+                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + action + "</AttributeValue>" +
+                        "          </Attribute>" +
+                        "     </Attributes>" +
+                        "</Request>");
+
+        return request.toString();
+    }
+
     private String toPrettyString(String xml, int indent) {
         try {
             // Turn xml string into a document
@@ -881,9 +961,11 @@ public class ServerImpl {
                 builder.setCertificate(certStr);
             }else{
                 builder.setValid(false);
+                builder.setErrorType(ErrorType.CERTIFICATE_NOT_VALID);
             }
         } catch (IOException e) {
             builder.setValid(false);
+            builder.setErrorType(ErrorType.SQL_ERROR);
         }
 
         return builder.build();

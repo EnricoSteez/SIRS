@@ -39,6 +39,39 @@ public class Client {
         logger.setLevel(Level.FINEST);
     }
 
+    public static void printErrorMessage(ErrorType type){
+        switch (type){
+            case SQL_ERROR:
+                System.out.println("ERROR: DATABASE ERROR");
+                break;
+            case NOT_AUTHORIZED:
+                System.out.println("ERROR: USER IS NOT AUTHORIZED TO DO THIS ACTION");
+                break;
+            case NOT_LOGGED_IN:
+                System.out.println("ERROR: USER IS NOT LOGGED IN");
+                break;
+            case PATIENT_DOES_NOT_EXIST:
+                System.out.println("ERROR: PATIENT DOES NOT EXIST");
+                break;
+            case USER_ALREADY_EXISTS:
+                System.out.println("ERROR: USER WITH NAME ALREADY EXISTS");
+                break;
+            case HASH_FAIL:
+                System.out.println("ERROR: FAILED WITH HASHING");
+                break;
+            case UNKNOWN:
+                System.out.println("ERROR: UNKNOWN ERROR");
+                break;
+            case SIGNATURE_DOESNT_MATCH:
+                System.out.println("ERROR: SIGNATURE DOES NOT MATCH CERTIFICATE");
+                break;
+            case CERTIFICATE_NOT_VALID:
+                System.out.println("ERROR: CERTIFICATE IS NOT VALID");
+                break;
+
+        }
+    }
+
     /**
      * Say hello to server.
      */
@@ -99,63 +132,8 @@ public class Client {
 //        }
 
         PatientInfoReply reply = blockingStub.retrievePatientInfo(request.build());
+
         return reply;
-    }
-
-    private void writeMedicalRecord(){
-        System.out.println("--------------WRITING MEDICAL RECORD--------------");
-        System.out.println("Patient name and surname:");
-        String nameSurname = System.console().readLine();
-        System.out.println("Patient email:");
-        String email = System.console().readLine();
-        System.out.println("Patient home address:");
-        String homeAddress = System.console().readLine();
-        System.out.println("Patient health number:");
-        int healthNumber = Integer.parseInt(System.console().readLine());
-        System.out.println("Patient health history:");
-        String healthHistory = System.console().readLine();
-        System.out.println("Patient allergies:");
-        String allergies = System.console().readLine();
-
-        PatientInfo patientInfo = PatientInfo.newBuilder()
-                .setNameSurname(nameSurname)
-                .setEmail(email)
-                .setHomeAddress(homeAddress)
-                .setHealthNumber(healthNumber)
-                .setHealthHistory(healthHistory)
-                .setAllergies(allergies)
-                .build();
-
-
-        /*try {
-            ByteString signature = ByteString.copyFrom(RSAOperations.sign(privateKey, patientInfo.toByteArray(), signatureAlg));
-
-            SignatureM signatureM = SignatureM.newBuilder()
-                    .setCryptAlgo(signatureAlg)
-                    .setNonce(rand.nextInt())
-                    .setSignature(signature)
-                    .build();
-
-
-
-            WritePatientInfoRequest request = WritePatientInfoRequest.newBuilder()
-                    .setPatientInfo(patientInfo)
-                    .setUserID(userID)
-                    .setSignature(signatureM)
-                    .build();
-
-            WritePatientInfoReply reply = blockingStub.writePatientInfo(request);
-
-            boolean successful = reply.getOk();
-            if (successful){
-                System.out.println("Successfully created patient record!");
-            }else{
-                System.out.println("Problem creating patient record!");
-                //TODO error message acording to type
-            }
-        } catch (Exception e) {
-            System.out.println("Error signing with private key");
-        }*/
     }
 
     private void registerNewAccount (){
@@ -208,6 +186,7 @@ public class Client {
                     .setUsername(username)
                     .setPassword(ByteString.copyFrom(passwordBytes))
                     .setToken(sessionToken)
+                    .setChosenRole(role)
                     .build();
             System.err.println("Register Request is: " + username + " ~ " + Arrays.toString(password) + " ~ " + role.name());
             RegisterReply reply = blockingStub.register(request);
@@ -215,8 +194,11 @@ public class Client {
             successfulRegister = reply.getOk();
             if(successfulRegister)
                 System.out.println("ALL GOOD!");
-            else
+            else{
                 System.out.println("BAD OUTCOME");
+                printErrorMessage(reply.getErrorType());
+            }
+
         }
     }
 
@@ -259,6 +241,7 @@ public class Client {
                 System.out.println("Successfully registered certificate");
             }else{
                 System.out.println("There was a problem registering the certificate");
+                printErrorMessage(reply.getErrorType());
             }
 
 
@@ -316,6 +299,9 @@ public class Client {
                         break;
                     case WRONGUSER:
                         System.out.println("You are not registered!");
+                        break;
+                    case SQLERROR:
+                        System.out.println("There was an database error!");
                         break;
                     case SUCCESS:
                         System.out.println("Welcome!!");
@@ -441,11 +427,13 @@ public class Client {
                     //EVENTUALLY THE USER WILL SELECT SOMETHING VALID, THE REQUEST TO THE SERVER IS THEN MADE
                     if(countRead>0){ //USER CHOSE TO RETRIEVE STUFF
                         PatientInfoReply reply = client.retrievePatientInfo(id, selectedNumbers);
-                        if(reply.getPermission())
+                        if(reply.getOk())
                             client.printRecords(reply.getRecords());
-                        else {
+                        else if(!reply.getPermission()){
                             System.out.println("PERMISSION DENIED");
                             System.out.println(reply.getPdpAdvice());
+                        }else{
+                            printErrorMessage(reply.getErrorType());
                         }
                     } else { //USER CHOSE TO WRITE STUFF, I already checked that there is no intersection between read and write choices
                         int selection = selectedNumbers.get(0); //THERE IS ONLY ONE IF I'M HERE
@@ -461,8 +449,10 @@ public class Client {
                         boolean successful = reply.getOk();
                         if(successful)
                             System.out.println("WRITE PERFORMED ON PATIENT WITH ID: " + reply.getPatientId() + "!");
-                        else
+                        else{
                             System.out.println("SERVER-SIDE ERROR OCCURRED, CHECK SERVER LOGS");
+                            printErrorMessage(reply.getErrorType());
+                        }
                     }
 
                 }
