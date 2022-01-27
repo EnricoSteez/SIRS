@@ -9,6 +9,7 @@ service HospitalService {
   rpc Register(RegisterRequest) returns (RegisterReply) {}
   rpc RegisterCertificate(RegisterCertificateRequest) returns (RegisterCertificateReply) {}
   rpc WritePatientInfo(WritePatientInfoRequest) returns(WritePatientInfoReply) {}
+  rpc CheckCertificate(CheckCertificateRequest) returns(CheckCertificateReply) {}
 }
 
 enum Role {
@@ -173,4 +174,13 @@ message PatientInfo{
   int32 healthNumber = 4;
   string healthHistory = 5;
   string allergies = 6;
+}
+
+message CheckCertificateRequest{
+  int32 userId = 1;
+}
+
+message CheckCertificateReply{
+  bool valid = 1;
+  string certificate = 2;
 }

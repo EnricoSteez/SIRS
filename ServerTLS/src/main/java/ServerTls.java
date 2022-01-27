@@ -173,6 +173,13 @@ public class ServerTls {
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
         }
+
+        @Override
+        public void checkCertificate(CheckCertificateRequest request, StreamObserver<CheckCertificateReply> responseObserver){
+            CheckCertificateReply reply = serverImpl.checkCertificate(request.getUserId(), request);
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        }
     }
 
 

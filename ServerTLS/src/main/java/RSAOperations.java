@@ -107,6 +107,16 @@ public class RSAOperations {
 		return sign.verify(Base64.getMimeDecoder().decode((signature.getBytes("UTF-8"))));
 	}
 
+	public static boolean isValidCertificate(String certificate){
+		try {
+			X509Certificate crt = getCertificateFromString(certificate);
+			crt.checkValidity();
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
+	}
+
 //	public static String encrypt(String rawText, PublicKey publicKey) throws IOException, GeneralSecurityException {
 //	    Cipher cipher = Cipher.getInstance("RSA");
 //	    cipher.init(Cipher.ENCRYPT_MODE, publicKey);

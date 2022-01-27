@@ -218,6 +218,22 @@ public class Client {
         }
     }
 
+    //checks if has valid certificate in server
+    //if not will register new one
+    private void manageCertificate(){
+        CheckCertificateRequest request = CheckCertificateRequest.newBuilder()
+                .setUserId(userID)
+                .build();
+        CheckCertificateReply reply = blockingStub.checkCertificate(request);
+        if(reply.getValid()){
+            if(!certificate.equals(reply.getCertificate())){
+                registerCertificate();
+            }
+        }else{
+            registerCertificate();
+        }
+    }
+
     private void registerCertificate(){
         try {
             System.out.println("Registering certificate");
@@ -301,6 +317,7 @@ public class Client {
                         break;
                     case SUCCESS:
                         System.out.println("Welcome!!");
+                        client.manageCertificate();
                         break;
                 }
             }
@@ -342,7 +359,7 @@ public class Client {
                 break;
             }
 
-            while (id > 0){ //DO STUFF UNTIL LOGOUT
+            while (id >= 0){ //DO STUFF UNTIL LOGOUT
                 boolean legalSelections = false;
                 List<Integer> selectedNumbers = new ArrayList<Integer>();
 

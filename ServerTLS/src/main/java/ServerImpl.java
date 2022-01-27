@@ -962,4 +962,22 @@ public class ServerImpl {
         }
     }
 
+    public CheckCertificateReply checkCertificate(int userId, CheckCertificateRequest request){
+
+        CheckCertificateReply.Builder builder =CheckCertificateReply.newBuilder();
+
+        try {
+            String certStr = RSAOperations.readFile(ServerTls.certificatesPath + userId + ".crt");
+            if(RSAOperations.isValidCertificate(certStr)){
+                builder.setValid(true);
+                builder.setCertificate(certStr);
+            }else{
+                builder.setValid(false);
+            }
+        } catch (IOException e) {
+            builder.setValid(false);
+        }
+
+        return builder.build();
+    }
 }
