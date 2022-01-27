@@ -25,6 +25,7 @@ public class Client {
     private static final String signatureAlg = "SHA256withRSA";
     private static Role userRole = Role.ADMIN;
     private static int userID = 1;
+    private static String sessionToken = "";
     private static RSAPrivateKey privateKey;
     private static String certificate;
     private static Random rand = new Random();
@@ -76,6 +77,7 @@ public class Client {
             userRole = reply.getRole();
 //            loggedUser = username;
             userID = reply.getUserId();
+            sessionToken = reply.getToken();
         }
         return reply.getCode();
     }
@@ -88,8 +90,8 @@ public class Client {
         System.err.println("Selections:" + Arrays.toString(selectedNumbers.toArray()));
 
         PatientInfoRequest.Builder request = PatientInfoRequest.newBuilder()
-                .setPatientID(id)
-                .setRole(userRole)
+                .setToken(sessionToken)
+                .setPatientId(id)
                 .addAllSelections(selectedNumbers);
 
 //        for(int i = 0 ; i < selectedNumbers.size() ; i++) {
@@ -205,7 +207,7 @@ public class Client {
             RegisterRequest request = RegisterRequest.newBuilder()
                     .setUsername(username)
                     .setPassword(ByteString.copyFrom(passwordBytes))
-                    .setRole(role)
+                    .setToken(sessionToken)
                     .build();
             System.err.println("Register Request is: " + username + " ~ " + Arrays.toString(password) + " ~ " + role.name());
             RegisterReply reply = blockingStub.register(request);
@@ -222,7 +224,7 @@ public class Client {
     //if not will register new one
     private void manageCertificate(){
         CheckCertificateRequest request = CheckCertificateRequest.newBuilder()
-                .setUserId(userID)
+                .setToken(sessionToken)
                 .build();
         CheckCertificateReply reply = blockingStub.checkCertificate(request);
         if(reply.getValid()){
@@ -249,7 +251,7 @@ public class Client {
                     .setCertificate(certificate)
                     .setNonce(nonce)
                     .setSignedNonce(signature)
-                    .setUserId(userID)
+                    .setToken(sessionToken)
                     .build();
             RegisterCertificateReply reply = blockingStub.registerCertificate(request);
 
@@ -562,8 +564,7 @@ public class Client {
                 .build();
 
         request.setSignature(signatureM);
-        request.setUserID(userID);
-        request.setRole(userRole);
+        request.setToken(sessionToken);
         request.setPatientID(patientID);
 
         return request.build();

@@ -32,8 +32,8 @@ message HelloReply {
 }
 
 message PatientInfoRequest {
-  int32 patientID = 1;
-  Role role = 2;
+  string token = 1;
+  int32 patientId = 2;
   repeated int32 selections = 3;
 }
 message PatientInfoReply {
@@ -79,25 +79,26 @@ message LoginReply {
     WRONGUSER = 1;
     WRONGPASS = 2;
   }
-//  enum Role {
-//    LAB_EMPLOYEE = 0;
-//    DOCTOR = 1;
-//    NURSE = 2;
-//    PATIENT_SERVICES_ASSISTANT = 3;
-//    CLINICAL_ASSISTANT = 4;
-//    PORTER_VOLUNTEER = 5;
-//    WARD_CLERK = 6;
-//  }
+  //  enum Role {
+  //    LAB_EMPLOYEE = 0;
+  //    DOCTOR = 1;
+  //    NURSE = 2;
+  //    PATIENT_SERVICES_ASSISTANT = 3;
+  //    CLINICAL_ASSISTANT = 4;
+  //    PORTER_VOLUNTEER = 5;
+  //    WARD_CLERK = 6;
+  //  }
   Code code = 1;
   Role role = 2;
   int32 userId = 3;
+  string token = 4;
 }
 
 
 message RegisterRequest {
   string username = 1;
   bytes password = 2;
-  Role role = 3;
+  string token = 3;
 }
 
 message RegisterReply {
@@ -108,7 +109,7 @@ message RegisterCertificateRequest{
   string certificate = 1;
   string nonce = 2;
   SignatureM signedNonce = 3;
-  int32 userId = 4;
+  string token = 4;
 }
 
 message RegisterCertificateReply{
@@ -131,8 +132,7 @@ message PatientInfo{
 }
 
 message WritePatientInfoRequest{
-  int32  userID = 1;
-  Role role = 2;
+  string token = 1;
   int32 patientID = 3;
   oneof fields {
     string nameSurname = 10;
@@ -153,7 +153,7 @@ message WritePatientInfoReply{
 }
 
 message CheckCertificateRequest{
-  int32 userId = 1;
+  string token = 1;
 }
 
 message CheckCertificateReply{

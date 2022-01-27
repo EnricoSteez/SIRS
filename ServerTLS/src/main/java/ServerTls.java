@@ -135,22 +135,39 @@ public class ServerTls {
         @Override
         public void retrievePatientInfo (PatientInfoRequest request, StreamObserver<PatientInfoReply> responseObserver) {
 //            super.retrievePatientInfo(request, responseObserver);
-            PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientID(), request.getRole(), request.getSelectionsList());
-            responseObserver.onNext(reply);
+            AuthenticationManager.TokenValue tv = serverImpl.authManager.getUser(request.getToken());
+            if(tv != null){
+                Role role = tv.userRole;
+                PatientInfoReply reply = serverImpl.retrievePatientInfo(request.getPatientId(), role, request.getSelectionsList());
+                responseObserver.onNext(reply);
+            }else{
+                //TODO error code
+                PatientInfoReply reply = PatientInfoReply.newBuilder().setPermission(false).build();
+                responseObserver.onNext(reply);
+            }
             responseObserver.onCompleted();
+
         }
 
         @Override
         public void register (RegisterRequest request, StreamObserver<RegisterReply> responseObserver)  {
 //            super.register(request, responseObserver);
-            String username = request.getUsername();
-            byte[] password = request.getPassword().toByteArray();
-            System.err.println("Received password byte[]: " + Arrays.toString(password));
-            Role role = request.getRole();
-            System.err.println("Received Register Request with: " + username + " ~ " + Arrays.toString(password) + " ~ " + Role.DOCTOR);
-            boolean ok = serverImpl.registerUser(username, password, role);
-            RegisterReply reply = RegisterReply.newBuilder().setOk(ok).build();
-            responseObserver.onNext(reply);
+            AuthenticationManager.TokenValue tv = serverImpl.authManager.getUser(request.getToken());
+            if(tv != null) {
+                Role role = tv.userRole;
+                String username = request.getUsername();
+                byte[] password = request.getPassword().toByteArray();
+                System.err.println("Received password byte[]: " + Arrays.toString(password));
+                System.err.println("Received Register Request with: " + username + " ~ " + Arrays.toString(password) + " ~ " + Role.DOCTOR);
+                boolean ok = serverImpl.registerUser(username, password, role);
+                RegisterReply reply = RegisterReply.newBuilder().setOk(ok).build();
+                responseObserver.onNext(reply);
+            }else{
+                //TODO error code
+                RegisterReply reply = RegisterReply.newBuilder().setOk(false).build();
+                responseObserver.onNext(reply);
+            }
+
             responseObserver.onCompleted();
 
         }
@@ -158,26 +175,55 @@ public class ServerTls {
         @Override
         public void registerCertificate(RegisterCertificateRequest request, StreamObserver<RegisterCertificateReply> responseObserver){
             //super.registerCertificate(request, responseObserver);
-
-            boolean ok = serverImpl.registerCertificate(request.getUserId(), request.getCertificate(),
-                    request.getNonce().getBytes(), request.getSignedNonce());
-            RegisterCertificateReply reply = RegisterCertificateReply.newBuilder().setOk(ok).build();
-            responseObserver.onNext(reply);
+            AuthenticationManager.TokenValue tv = serverImpl.authManager.getUser(request.getToken());
+            if(tv != null){
+                int userId = tv.userId;
+                boolean ok = serverImpl.registerCertificate(userId, request.getCertificate(),
+                        request.getNonce().getBytes(), request.getSignedNonce());
+                RegisterCertificateReply reply = RegisterCertificateReply.newBuilder().setOk(ok).build();
+                responseObserver.onNext(reply);
+            }else{
+                //TODO error code
+                RegisterCertificateReply reply = RegisterCertificateReply.newBuilder().setOk(false).build();
+                responseObserver.onNext(reply);
+            }
             responseObserver.onCompleted();
+
         }
 
         @Override
         public void writePatientInfo(WritePatientInfoRequest request, StreamObserver<WritePatientInfoReply> responseObserver) {
             //super.writePatientInfo(request, responseObserver);
-            WritePatientInfoReply reply = serverImpl.writePatientInfo(request.getUserID(),request.getRole(), request);
-            responseObserver.onNext(reply);
+            AuthenticationManager.TokenValue tv = serverImpl.authManager.getUser(request.getToken());
+            System.out.println("\nWriting patient info:");
+            if(tv != null){
+                int userId = tv.userId;
+                Role role = tv.userRole;
+                System.out.println("Successfull login:");
+                WritePatientInfoReply reply = serverImpl.writePatientInfo(userId,role, request);
+                responseObserver.onNext(reply);
+            }else{
+                //TODO error code
+                System.out.println("Couldnt login:");
+                WritePatientInfoReply reply = WritePatientInfoReply.newBuilder().setOk(false).build();
+                responseObserver.onNext(reply);
+            }
             responseObserver.onCompleted();
+
         }
 
         @Override
         public void checkCertificate(CheckCertificateRequest request, StreamObserver<CheckCertificateReply> responseObserver){
-            CheckCertificateReply reply = serverImpl.checkCertificate(request.getUserId(), request);
-            responseObserver.onNext(reply);
+            AuthenticationManager.TokenValue tv = serverImpl.authManager.getUser(request.getToken());
+            if(tv != null){
+                int userId = tv.userId;
+                CheckCertificateReply reply = serverImpl.checkCertificate(userId, request);
+                responseObserver.onNext(reply);
+            }else{
+                //TODO error code
+                CheckCertificateReply reply = CheckCertificateReply.newBuilder().setValid(false).build();
+                responseObserver.onNext(reply);
+            }
             responseObserver.onCompleted();
         }
     }

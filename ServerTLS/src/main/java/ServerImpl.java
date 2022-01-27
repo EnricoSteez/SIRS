@@ -44,6 +44,7 @@ public class ServerImpl {
     private static AccessControlServiceGrpc.AccessControlServiceBlockingStub blockingStub;
     private static DocumentBuilder builder;
     private final Map<Integer,String> MedicalRecordContent = new HashMap<Integer,String>();
+    public AuthenticationManager authManager = new AuthenticationManager();
 
     //RETRIEVING DATA:
     private static final String RETRIEVE_NAME_SURNAME_P_ST = "SELECT NameSurname from medical_records WHERE PatientID = ?";
@@ -172,6 +173,10 @@ public class ServerImpl {
                     reply.setCode(LoginReply.Code.SUCCESS)
                             .setUserId(id)
                             .setRole(role);
+                    String token = authManager.logUser(id, role);
+                    reply.setToken(token);
+                    System.out.println("User successfully loged in");
+
                 }else {
                     reply.setCode(LoginReply.Code.WRONGPASS);
                 }
@@ -181,9 +186,6 @@ public class ServerImpl {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        //here SIRS is database name, sirs is username and password
-        //TODO @Daniel PLEASE figure out how to connect with SSL (if you need to add anything to the code)
 
         return reply.build();
     }
@@ -481,6 +483,7 @@ public class ServerImpl {
 
         } catch (SQLException e) {
             writeBuilder.setOk(false);
+            System.out.println("SQL exception");
             return;
         }
 
@@ -544,6 +547,7 @@ public class ServerImpl {
 
         } catch (SQLException e) {
             writeBuilder.setOk(false);
+            System.out.println("SQL exception");
             return;
         }
 
@@ -560,6 +564,7 @@ public class ServerImpl {
                     request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.PROBLEMS ||
                     request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.VISIT){
                 writeBuilder.setOk(false);
+                System.out.println("Invalid id (0)");
                 return;
             }else{
                 insertPatientInfo(request, writeBuilder);
@@ -586,9 +591,11 @@ public class ServerImpl {
         boolean signatureMatches = checkMessage(userId, convertToMessageBytes(request), request.getSignature());
         //TODO return specific code
         if(!signatureMatches){
+            System.out.println("Signature didnt match");
             writeBuilder.setOk(false);
             return writeBuilder.build();
         }
+        System.out.println("Signature matched");
 
         //signature matches, has permission, start writing
         checkInsertOrUpdate(request, writeBuilder);
