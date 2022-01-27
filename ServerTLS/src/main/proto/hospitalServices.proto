@@ -60,7 +60,7 @@ message MedicalRecords {
 message PersonalData {
   optional string homeAddress = 4;
   string email = 5;
-  string healthNumber = 6;
+  int32 healthNumber = 6;
 }
 
 message VisitDate {
@@ -123,6 +123,7 @@ message WritePatientInfoRequest{
 
 message WritePatientInfoReply{
   bool ok = 1;
+  int32 patientId = 2;
 }
 
 //services for XACML permission validation

@@ -169,10 +169,9 @@ public class ServerTls {
         @Override
         public void writePatientInfo(WritePatientInfoRequest request, StreamObserver<WritePatientInfoReply> responseObserver) {
             //super.writePatientInfo(request, responseObserver);
-            /*boolean ok = serverImpl.writeRecord(request.getUserID(), request.getPatientInfo(), request.getSignature());
-            WritePatientInfoReply reply = WritePatientInfoReply.newBuilder().setOk(ok).build();
+            WritePatientInfoReply reply = serverImpl.writePatientInfo(request.getUserID(),request.getRole(), request);
             responseObserver.onNext(reply);
-            responseObserver.onCompleted();*/
+            responseObserver.onCompleted();
         }
     }
 

@@ -29,6 +29,7 @@ import java.security.cert.Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.sql.*;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -43,17 +44,8 @@ public class ServerImpl {
     private static AccessControlServiceGrpc.AccessControlServiceBlockingStub blockingStub;
     private static DocumentBuilder builder;
     private final Map<Integer,String> MedicalRecordContent = new HashMap<Integer,String>();
-    /*
-                    System.out.println("[1] -> Name Surname");
-                    System.out.println("[2] -> Personal Information (home address, email, health number)");
-                    System.out.println("[3] -> Health Issues");
-                    System.out.println("[4] -> Prescribed Medications");
-                    System.out.println("[5] -> Health History");
-                    System.out.println("[6] -> Allergies");
-                    System.out.println("[7] -> Past visits history");
-                    System.out.println("[8] -> Lab Results");
-                    System.out.println("[9] -> Complete Medical Records");
-     */
+
+    //RETRIEVING DATA:
     private static final String RETRIEVE_NAME_SURNAME_P_ST = "SELECT NameSurname from medical_records WHERE PatientID = ?";
     private static final String RETRIEVE_PERSONAL_DATA_P_ST = "SELECT email,HomeAddress,HealthNumber from medical_records WHERE PatientID = ?";
     private static final String RETRIEVE_PROBLEMS_P_ST = "SELECT ProblemDescription from problems WHERE PatientID = ?";
@@ -63,6 +55,22 @@ public class ServerImpl {
     private static final String RETRIEVE_VISITS_HISTORY_P_ST = "SELECT VisitDate from clinic_visits WHERE PatientID = ?";
     private static final String RETRIEVE_LAB_RESULTS_P_ST = "SELECT Results from lab_results WHERE PatientID = ?";
     //private static final String RETRIEVE_ALL_DATA_P_ST = "";
+
+    //INSERTING INTO TABLE:
+    private static final String INSERT_NAME_SURNAME_P_ST = "INSERT INTO medical_records (NameSurname) VALUES (?)";
+    private static final String INSERT_PERSONAL_DATA_P_ST = "INSERT INTO medical_records (email,HomeAddress,HealthNumber) VALUES (?,?,?)";
+    private static final String INSERT_PROBLEMS_P_ST = "INSERT INTO problems (PatientID,ProblemDescription) VALUES (?,?)";
+    private static final String INSERT_MEDICATIONS_P_ST = "INSERT INTO medications (PatientID,Medicine) VALUES (?,?)";
+    private static final String INSERT_HEALTH_HISTORY_P_ST = "INSERT INTO medical_records (HealthHistory) VALUES (?)";
+    private static final String INSERT_ALLERGY_P_ST = "INSERT INTO medical_records (Allergies) VALUES (?)";
+    private static final String INSERT_VISIT_P_ST = "INSERT INTO clinic_visits (PatientID,VisitDate) VALUES (?,?)";
+    private static final String INSERT_LAB_RESULT_P_ST = "INSERT INTO lab_results (PatientID,Results) VALUES (?,?)";
+    //UPDATING VALUE:
+    private static final String UPDATE_NAME_SURNAME_P_ST = "UPDATE medical_records SET NameSurname = ? WHERE PatientID = ?";
+    private static final String UPDATE_PERSONAL_DATA_P_ST = "UPDATE medical_records SET email = ?, HomeAddress = ?, HealthNumber = ? WHERE PatientID = ?";
+    private static final String UPDATE_HEALTH_HISTORY_P_ST = "UPDATE medical_records SET HealthHistory = ? WHERE PatientID = ?";
+    private static final String UPDATE_ALLERGY_P_ST = "UPDATE medical_records SET Allergies = ? WHERE PatientID = ?";
+
 
     public static ServerImpl getInstance(String target) {
         if(instance == null)
@@ -205,7 +213,7 @@ public class ServerImpl {
                 if(res.next()) {
                     String email = res.getString("email");
                     String homeAddress = res.getString("HomeAddress");
-                    String healthNumber = res.getString("HealthNumber");
+                    int healthNumber = res.getInt("HealthNumber");
                     PersonalData pdata = PersonalData.newBuilder()
                             .setEmail(email)
                             .setHomeAddress(homeAddress)
@@ -349,8 +357,294 @@ public class ServerImpl {
         return patientInfoReply.build();
     }
 
-    public WritePatientInfoReply writePatientInfo (int patientID, Role whoami, WritePatientInfoRequest request){
+    private void insertPatientInfo(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder){
+        request.getFieldsCase();
+        int patientId = 0;
+        try {
+            PreparedStatement statement;
+            ResultSet rs;
 
+            switch (request.getFieldsCase()){
+                case NAMESURNAME:
+                    String nameSurname = request.getNameSurname();
+                    statement = con.prepareStatement(INSERT_NAME_SURNAME_P_ST, Statement.RETURN_GENERATED_KEYS);
+                    statement.setString(1,nameSurname);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+
+                    rs = statement.getGeneratedKeys();
+                    if (rs.next()) {
+                        patientId = rs.getInt(1);
+                    }
+                    break;
+                case PERSONALDATA:
+                    PersonalData pData = request.getPersonalData();
+                    statement = con.prepareStatement(INSERT_PERSONAL_DATA_P_ST, Statement.RETURN_GENERATED_KEYS);
+                    statement.setString(1,pData.getEmail());
+                    statement.setString(2,pData.getHomeAddress());
+                    statement.setInt(3, pData.getHealthNumber());
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+
+                    rs = statement.getGeneratedKeys();
+                    if (rs.next()) {
+                        patientId = rs.getInt(1);
+                    }
+                    break;
+                case PROBLEMS:
+                    patientId = request.getPatientID();
+                    String problem = request.getProblems();
+                    statement = con.prepareStatement(INSERT_PROBLEMS_P_ST);
+                    statement.setInt(1,patientId);
+                    statement.setString(2,problem);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+
+                    break;
+                case MEDICATIONS:
+                    patientId = request.getPatientID();
+                    String medication = request.getMedications();
+                    statement = con.prepareStatement(INSERT_MEDICATIONS_P_ST);
+                    statement.setInt(1,patientId);
+                    statement.setString(2,medication);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+                    break;
+                case HEALTHHISTORYRECORD:
+                    String healthHistory = request.getHealthHistoryRecord();
+                    statement = con.prepareStatement(INSERT_HEALTH_HISTORY_P_ST, Statement.RETURN_GENERATED_KEYS);
+                    statement.setString(1,healthHistory);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+
+                    rs = statement.getGeneratedKeys();
+                    if (rs.next()) {
+                        patientId = rs.getInt(1);
+                    }
+                    break;
+                case ALLERGY:
+                    String allergy = request.getAllergy();
+                    statement = con.prepareStatement(INSERT_ALLERGY_P_ST, Statement.RETURN_GENERATED_KEYS);
+                    statement.setString(1,allergy);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+
+                    rs = statement.getGeneratedKeys();
+                    if (rs.next()) {
+                        patientId = rs.getInt(1);
+                    }
+                    break;
+                case VISIT:
+                    patientId = request.getPatientID();
+                    VisitDate date = request.getVisit();
+                    LocalDate lDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
+                    statement = con.prepareStatement(INSERT_VISIT_P_ST);
+                    statement.setInt(1,patientId);
+                    statement.setDate(2,java.sql.Date.valueOf( lDate ));
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+                    break;
+                case LABRESULT:
+                    patientId = request.getPatientID();
+                    String labResult = request.getLabResult();
+                    statement = con.prepareStatement(INSERT_LAB_RESULT_P_ST);
+                    statement.setInt(1,patientId);
+                    statement.setString(2,labResult);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+                    break;
+            }
+
+        } catch (SQLException e) {
+            writeBuilder.setOk(false);
+            return;
+        }
+
+        writeBuilder.setPatientId(patientId);
+        writeBuilder.setOk(true);
+    }
+
+    private void updatePatientInfo(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder){
+        request.getFieldsCase();
+        int patientId = request.getPatientID();
+        try {
+            PreparedStatement statement;
+            switch (request.getFieldsCase()){
+                case NAMESURNAME:
+                    String nameSurname = request.getNameSurname();
+                    statement = con.prepareStatement(UPDATE_NAME_SURNAME_P_ST);
+                    statement.setString(1,nameSurname);
+                    statement.setInt(2,patientId);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+                    break;
+                case PERSONALDATA:
+                    PersonalData pData = request.getPersonalData();
+                    statement = con.prepareStatement(UPDATE_PERSONAL_DATA_P_ST, Statement.RETURN_GENERATED_KEYS);
+                    statement.setString(1,pData.getEmail());
+                    statement.setString(2,pData.getHomeAddress());
+                    statement.setInt(3, pData.getHealthNumber());
+                    statement.setInt(4,patientId);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+                    break;
+                case HEALTHHISTORYRECORD:
+                    String healthHistory = request.getHealthHistoryRecord();
+                    statement = con.prepareStatement(UPDATE_HEALTH_HISTORY_P_ST, Statement.RETURN_GENERATED_KEYS);
+                    statement.setString(1,healthHistory);
+                    statement.setInt(2,patientId);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+                    break;
+                case ALLERGY:
+                    String allergy = request.getAllergy();
+                    statement = con.prepareStatement(UPDATE_ALLERGY_P_ST, Statement.RETURN_GENERATED_KEYS);
+                    statement.setString(1,allergy);
+                    statement.setInt(2,patientId);
+
+                    if(statement.executeUpdate() != 1){
+                        writeBuilder.setOk(false);
+                        return;
+                    }
+                    break;
+            }
+
+        } catch (SQLException e) {
+            writeBuilder.setOk(false);
+            return;
+        }
+
+        writeBuilder.setPatientId(patientId);
+        writeBuilder.setOk(true);
+    }
+
+    private void checkInsertOrUpdate(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder){
+        if(request.getPatientID() == 0){
+            //user didnt select patient id
+            //For these cases we need an id
+            if(request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.LABRESULT ||
+                    request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.MEDICATIONS ||
+                    request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.PROBLEMS ||
+                    request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.VISIT){
+                writeBuilder.setOk(false);
+                return;
+            }else{
+                insertPatientInfo(request, writeBuilder);
+            }
+        }else{
+            if(request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.LABRESULT ||
+                    request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.MEDICATIONS ||
+                    request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.PROBLEMS ||
+                    request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.VISIT){
+
+                insertPatientInfo(request, writeBuilder);
+            }else{
+                updatePatientInfo(request, writeBuilder);
+            }
+        }
+    }
+
+    public WritePatientInfoReply writePatientInfo (int userId, Role whoami, WritePatientInfoRequest request){
+
+        WritePatientInfoReply.Builder writeBuilder = WritePatientInfoReply.newBuilder();
+        //TODO check permission
+
+        //CHECKING SIGNATURE:
+        boolean signatureMatches = checkMessage(userId, convertToMessageBytes(request), request.getSignature());
+        //TODO return specific code
+        if(!signatureMatches){
+            writeBuilder.setOk(false);
+            return writeBuilder.build();
+        }
+
+        //signature matches, has permission, start writing
+        checkInsertOrUpdate(request, writeBuilder);
+
+        return writeBuilder.build();
+    }
+
+    private byte[] convertToMessageBytes(WritePatientInfoRequest request){
+        request.getFieldsCase();
+        switch (request.getFieldsCase()){
+            case NAMESURNAME:
+                String nameSurname = request.getNameSurname();
+                return nameSurname.getBytes(StandardCharsets.UTF_8);
+            case PERSONALDATA:
+                PersonalData pData = request.getPersonalData();
+                return pData.toByteArray();
+            case PROBLEMS:
+                String problem = request.getProblems();
+                return problem.getBytes(StandardCharsets.UTF_8);
+            case MEDICATIONS:
+                String medication = request.getMedications();
+                return medication.getBytes(StandardCharsets.UTF_8);
+            case HEALTHHISTORYRECORD:
+                String healthHistory = request.getHealthHistoryRecord();
+                return healthHistory.getBytes(StandardCharsets.UTF_8);
+            case ALLERGY:
+                String allergy = request.getAllergy();
+                return allergy.getBytes(StandardCharsets.UTF_8);
+            case VISIT:
+                VisitDate date = request.getVisit();
+                return date.toByteArray();
+            case LABRESULT:
+                String labResult = request.getLabResult();
+                return labResult.getBytes(StandardCharsets.UTF_8);
+        }
+        return null;
+    }
+
+    private boolean checkMessage(int userId, byte[] message, SignatureM signatureM){
+        try {
+
+            System.out.println("\n\nRetrieving certificate in path: " + ServerTls.certificatesPath + userId + ".crt");
+
+            System.out.println("Signing with: " + signatureM.getCryptAlgo());
+
+            PublicKey pubKey = RSAOperations.getCertificateFromPath(ServerTls.certificatesPath + userId + ".crt").getPublicKey();
+
+            boolean signatureValid = RSAOperations.verify(pubKey, message, signatureM.getSignature().toByteArray(), signatureM.getCryptAlgo());
+
+            return signatureValid;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("User does not have a certificate");
+        }
+        return false;
     }
 
 

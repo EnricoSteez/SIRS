@@ -441,7 +441,7 @@ public class Client {
                         WritePatientInfoReply reply = blockingStub.writePatientInfo(request);
                         boolean successful = reply.getOk();
                         if(successful)
-                            System.out.println("WRITE PERFORMED!");
+                            System.out.println("WRITE PERFORMED ON PATIENT WITH ID: " + reply.getPatientId() + "!");
                         else
                             System.out.println("SERVER-SIDE ERROR OCCURRED, CHECK SERVER LOGS");
                     }
@@ -479,7 +479,7 @@ public class Client {
                 System.out.println("Insert Email:");
                 String email = System.console().readLine();
                 System.out.println("Insert Health Number:");
-                String healthNumber = System.console().readLine();
+                int healthNumber = Integer.parseInt(System.console().readLine());
                 PersonalData personalData = PersonalData.newBuilder()
                         .setEmail(email)
                         .setHealthNumber(healthNumber)
