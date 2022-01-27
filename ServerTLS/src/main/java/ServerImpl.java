@@ -349,6 +349,11 @@ public class ServerImpl {
         return patientInfoReply.build();
     }
 
+    public WritePatientInfoReply writePatientInfo (int patientID, Role whoami, WritePatientInfoRequest request){
+
+    }
+
+
     public boolean registerCertificate(int userId, String certificate, byte[] nonce, SignatureM signature){
 
         try {

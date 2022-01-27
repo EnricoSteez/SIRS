@@ -107,6 +107,7 @@ message RegisterReply {
 message WritePatientInfoRequest{
   int32  userID = 1;
   Role role = 2;
+  int32 patientID = 3;
   oneof fields {
     string nameSurname = 10;
     PersonalData personalData = 11;

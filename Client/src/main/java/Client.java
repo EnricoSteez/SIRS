@@ -331,7 +331,7 @@ public class Client {
 //          ************************************************** PATIENTS' MEDICAL RECORDS RETRIEVAL **************************************************
 
             //AFTER SUCCESSFUL LOGIN, A USER INTERACTION LOOP STARTS UNTIL LOGOUT
-            System.out.println("Insert PatientID to retrieve info, -1 to logout");
+            System.out.println("Insert PatientID to retrieve info, -1 to logout, 0 if you wish to create a new patient record");
             int id;
             while(true) {
                 try {
@@ -405,7 +405,7 @@ public class Client {
                                 legalSelections=false;
                                 continue;
                             }
-                            if(countWrite>0){
+                            if(countWrite>1){
                                 System.out.println("You can only write one field at a time { for now ;) }");
                                 legalSelections=false;
                                 continue;
@@ -432,7 +432,7 @@ public class Client {
                         int selection = selectedNumbers.get(0); //THERE IS ONLY ONE IF I'M HERE
                         WritePatientInfoRequest request = null;
                         try {
-                            request = createRequest(selection);
+                            request = createRequest(selection, id);
                         }
                         catch (Exception e) {
                             e.printStackTrace();
@@ -459,7 +459,7 @@ public class Client {
         }
     }
 
-    private static WritePatientInfoRequest createRequest (int selection) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, UnsupportedEncodingException {
+    private static WritePatientInfoRequest createRequest (int selection, int patientID) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, UnsupportedEncodingException {
         ByteString signature = null;
         WritePatientInfoRequest.Builder request = WritePatientInfoRequest.newBuilder();
 
@@ -547,6 +547,7 @@ public class Client {
         request.setSignature(signatureM);
         request.setUserID(userID);
         request.setRole(userRole);
+        request.setPatientID(patientID);
 
         return request.build();
     }
