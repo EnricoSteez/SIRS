@@ -21,13 +21,13 @@ import java.util.logging.Logger;
 public class Client {
     private static final Logger logger = Logger.getLogger(Client.class.getName());
 
-    private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
+    private static HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
     private static final String signatureAlg = "SHA256withRSA";
     private static Role userRole = Role.ADMIN;
-    private int userID = 1;
+    private static int userID = 1;
     private static RSAPrivateKey privateKey;
     private static String certificate;
-    private Random rand = new Random();
+    private static Random rand = new Random();
 //    private static String loggedUser = null;
 
     /**
@@ -53,7 +53,6 @@ public class Client {
         }
         logger.info("Greeting: " + response.getMessage());
     }
-
 
     /**
      *
@@ -155,7 +154,6 @@ public class Client {
         } catch (Exception e) {
             System.out.println("Error signing with private key");
         }*/
-
     }
 
     private void registerNewAccount (){
@@ -251,7 +249,6 @@ public class Client {
             System.out.println("Problem reading certificate or private key");
         }
     }
-
 
     public static void main(String[] args) throws Exception {
 
@@ -398,16 +395,20 @@ public class Client {
                                     countRead++;
                                 else if(i>=10 && i<18)
                                     countWrite++;
-                                else
+                                else {
                                     legalSelections = false;
+                                    break;
+                                }
                             }
                             if(countRead>0 && countWrite>0) {
                                 System.out.println("You cannot read and write at the same time");
                                 legalSelections=false;
+                                continue;
                             }
                             if(countWrite>0){
                                 System.out.println("You can only write one field at a time { for now ;) }");
                                 legalSelections=false;
+                                continue;
                             }
                             if((selectedNumbers.contains(9) || selectedNumbers.contains(18)) && selectedNumbers.size()>1){
                                 System.out.println("If you select more than a number, the selections must not include 9 nor 18!");
@@ -430,21 +431,46 @@ public class Client {
                     } else { //USER CHOSE TO WRITE STUFF, I already checked that there is no intersection between read and write choices
                         //todo PROCEDURE FOR WRITING RECORDS: *** P E D A N T I C ***
                         int selection = selectedNumbers.get(0); //THERE IS ONLY ONE IF I'M HERE
+                        ByteString signature = null;
+                        WritePatientInfoRequest.Builder request = WritePatientInfoRequest.newBuilder();
+
                         switch (selection) {
                             case 10:
-                                client.changeNameSurname();
+                                System.out.println("Insert Name:");
+                                String name = System.console().readLine();
+                                System.out.println("Insert Surname:");
+                                String surname = System.console().readLine();
+                                String nameSurname = name + surname;
+                                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, nameSurname.getBytes(StandardCharsets.UTF_8), signatureAlg));
                                 break;
                             case 11:
-                                client.changePersonalInfo();
                                 break;
                             case 12:
-                                client.addMedication();
                             case 13:
-                                client.addHealthIssues();
                                 break;
                             case 14:
-
+                                break;
+                            case 15:
+                                break;
+                            case 16:
+                                break;
+                            case 17:
+                                break;
                         }
+
+                        assert signature != null;
+
+                        SignatureM signatureM = SignatureM.newBuilder()
+                                .setCryptAlgo(signatureAlg)
+                                .setNonce(rand.nextInt())
+                                .setSignature(signature)
+                                .build();
+
+                        request.setSignature(SignatureM.parseFrom(signature));
+
+                        WritePatientInfoReply reply = blockingStub.writePatientInfo(request.build());
+
+                        boolean successful = reply.getOk();
                     }
 
                 }
@@ -483,8 +509,6 @@ public class Client {
 
         System.out.println(builder);
     }
-
-
 
 
 }

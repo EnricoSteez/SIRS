@@ -163,7 +163,7 @@ public class ServerImpl {
     public PatientInfoReply retrievePatientInfo (int patientID, Role whoami, List<Integer> selectionsList) {
         String xacmlRequest = createRequestString(whoami, selectionsList, "read");
         System.out.println("CREATING ACCESS REQUEST STRING:");
-        System.out.println(xacmlRequest);
+        System.out.println(toPrettyString(xacmlRequest,1));
 
 //      --------------------------- PDP ACCESS CONTROL REQUEST ---------------------------
         AccessControlRequest request = AccessControlRequest.newBuilder().setXacmlRequest(xacmlRequest).build();

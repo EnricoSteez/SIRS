@@ -114,7 +114,7 @@ public class PDPServer {
      * Main method.  This comment makes the linter happy.
      */
     public static void main(String[] args) throws Exception {
-        if(args.length != 1) {
+        if(args.length > 1) {
             System.out.println("Usage: PDPServer [PandemicMode]");
             System.out.println("Specify PandemicMode to start the PDP in, guess what mode...");
             System.out.println("Without arguments, the PDP will use a Normal Mode policy");
