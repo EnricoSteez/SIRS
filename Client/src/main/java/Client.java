@@ -365,14 +365,14 @@ public class Client {
                     System.out.println("Insert either a list of selections or 9, followed by ENTER.\nDo not insert 9 along with other selections, please:");
                     System.out.println();
                     System.out.println("****************************** UPDATE PATIENTS INFO ******************************\n");
-                    System.out.println("[10] -> Name Surname");
-                    System.out.println("[11] -> Personal Information (home address, email, health number)");
-                    System.out.println("[12] -> Health Issues");
-                    System.out.println("[13] -> Prescribed Medications");
-                    System.out.println("[14] -> Health History");
-                    System.out.println("[15] -> Allergies");
-                    System.out.println("[16] -> Past visits history");
-                    System.out.println("[17] -> Lab Results");
+                    System.out.println("[10] -> Change Name Surname");
+                    System.out.println("[11] -> Change Personal Information (home address, email, health number)");
+                    System.out.println("[12] -> Change Health Problems");
+                    System.out.println("[13] -> Change Prescribed Medications");
+                    System.out.println("[14] -> Add new Health History record");
+                    System.out.println("[15] -> Add new Allergy");
+                    System.out.println("[16] -> Add Clinical Visit record");
+                    System.out.println("[17] -> Add Lab Result");
                     System.out.println("Insert a single number, followed by ENTER. (you can only write a single field at a time)");
 
                     String selections = System.console().readLine();
@@ -429,77 +429,28 @@ public class Client {
                             System.out.println(reply.getPdpAdvice());
                         }
                     } else { //USER CHOSE TO WRITE STUFF, I already checked that there is no intersection between read and write choices
-                        //todo PROCEDURE FOR WRITING RECORDS: *** P E D A N T I C ***
                         int selection = selectedNumbers.get(0); //THERE IS ONLY ONE IF I'M HERE
-                        ByteString signature = null;
-                        WritePatientInfoRequest.Builder request = WritePatientInfoRequest.newBuilder();
-
-                        switch (selection) {
-                            case 10:
-                                System.out.println("Insert Name:");
-                                String name = System.console().readLine();
-                                System.out.println("Insert Surname:");
-                                String surname = System.console().readLine();
-                                String nameSurname = name + surname;
-                                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, nameSurname.getBytes(StandardCharsets.UTF_8), signatureAlg));
-                                request.setNameSurname(nameSurname);
-                                break;
-                            case 11:
-                                System.out.println("Insert Home Address:");
-                                String homeAddress = System.console().readLine();
-                                System.out.println("Insert Email:");
-                                String email = System.console().readLine();
-                                System.out.println("Insert Health Number:");
-                                String healthNumber = System.console().readLine();
-                                PersonalData personalData = PersonalData.newBuilder()
-                                        .setEmail(email)
-                                        .setHealthNumber(healthNumber)
-                                        .setHomeAddress(homeAddress)
-                                        .build();
-                                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, personalData.toByteArray(), signatureAlg));
-                                request.setPersonalData(personalData);
-                                break;
-                            case 12:
-                                System.out.println("Insert new Health Issue:");
-                                String healthIssue = System.console().readLine();
-                                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, healthIssue.getBytes(StandardCharsets.UTF_8), signatureAlg));
-                                request.setHealthHistory(healthIssue);
-                            case 13:
-                                System.out.println("Insert new Medication:");
-                                String medication = System.console().readLine();
-                                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, medication.getBytes(StandardCharsets.UTF_8), signatureAlg));
-                                request.setMedications(medication);
-                                break;
-                            case 14:
-                                break;
-                            case 15:
-                                break;
-                            case 16:
-                                break;
-                            case 17:
-                                break;
+                        WritePatientInfoRequest request = null;
+                        try {
+                            request = createRequest(selection);
                         }
-
-                        assert signature != null;
-
-                        SignatureM signatureM = SignatureM.newBuilder()
-                                .setCryptAlgo(signatureAlg)
-                                .setNonce(rand.nextInt())
-                                .setSignature(signature)
-                                .build();
-
-                        request.setSignature(signatureM);
-
-                        WritePatientInfoReply reply = blockingStub.writePatientInfo(request.build());
-
+                        catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        assert request != null;
+                        WritePatientInfoReply reply = blockingStub.writePatientInfo(request);
                         boolean successful = reply.getOk();
+                        if(successful)
+                            System.out.println("WRITE PERFORMED!");
+                        else
+                            System.out.println("SERVER-SIDE ERROR OCCURRED, CHECK SERVER LOGS");
                     }
 
                 }
                 System.out.println("\n\nInsert another PatientID, -1 to logout");
                 try {
                     id = Integer.parseInt(System.console().readLine());
-                } catch (Exception e){
+                } catch (NumberFormatException e){
                     id = -1;
                 }
             }
@@ -508,8 +459,97 @@ public class Client {
         }
     }
 
+    private static WritePatientInfoRequest createRequest (int selection) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, UnsupportedEncodingException {
+        ByteString signature = null;
+        WritePatientInfoRequest.Builder request = WritePatientInfoRequest.newBuilder();
 
-    
+        switch (selection) {
+            case 10:
+                System.out.println("Insert Name:");
+                String name = System.console().readLine();
+                System.out.println("Insert Surname:");
+                String surname = System.console().readLine();
+                String nameSurname = name + surname;
+                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, nameSurname.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                request.setNameSurname(nameSurname);
+                break;
+            case 11:
+                System.out.println("Insert Home Address:");
+                String homeAddress = System.console().readLine();
+                System.out.println("Insert Email:");
+                String email = System.console().readLine();
+                System.out.println("Insert Health Number:");
+                String healthNumber = System.console().readLine();
+                PersonalData personalData = PersonalData.newBuilder()
+                        .setEmail(email)
+                        .setHealthNumber(healthNumber)
+                        .setHomeAddress(homeAddress)
+                        .build();
+                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, personalData.toByteArray(), signatureAlg));
+                request.setPersonalData(personalData);
+                break;
+            case 12:
+                System.out.println("Write updated Health Problems:");
+                String problems = System.console().readLine();
+                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, problems.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                request.setProblems(problems);
+                break;
+            case 13:
+                System.out.println("Write updated Medications:");
+                String medications = System.console().readLine();
+                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, medications.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                request.setMedications(medications);
+                break;
+            case 14:
+                System.out.println("Insert new Health History record:");
+                String healthRecord = System.console().readLine();
+                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, healthRecord.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                request.setHealthHistoryRecord(healthRecord);
+                break;
+            case 15:
+                System.out.println("Insert new Allergy:");
+                String allergy = System.console().readLine();
+                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, allergy.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                request.setAllergy(allergy);
+                break;
+            case 16:
+                System.out.println("Insert new Clinical Visit:");
+                System.out.println("Year:");
+                int year = Integer.parseInt(System.console().readLine());
+                System.out.println("Month:");
+                int month = Integer.parseInt(System.console().readLine());
+                System.out.println("Day:");
+                int day = Integer.parseInt(System.console().readLine());
+                VisitDate date = VisitDate.newBuilder()
+                        .setYear(year)
+                        .setMonth(month)
+                        .setDay(day)
+                        .build();
+
+                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, date.toByteArray(), signatureAlg));
+                request.setVisit(date);
+                break;
+            case 17:
+                System.out.println("Insert new Lab Result:");
+                String labResult = System.console().readLine();
+                signature = ByteString.copyFrom(RSAOperations.sign(privateKey, labResult.getBytes(StandardCharsets.UTF_8), signatureAlg));
+                request.setLabResult(labResult);
+                break;
+        }
+        assert signature != null;
+
+        SignatureM signatureM = SignatureM.newBuilder()
+                .setCryptAlgo(signatureAlg)
+                .setNonce(rand.nextInt())
+                .setSignature(signature)
+                .build();
+
+        request.setSignature(signatureM);
+        request.setUserID(userID);
+        request.setRole(userRole);
+
+        return request.build();
+    }
 
     private byte[] toBytes(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);

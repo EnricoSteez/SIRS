@@ -113,7 +113,7 @@ message WritePatientInfoRequest{
     PersonalData personalData = 11;
     string problem = 12;
     string medication = 13;
-    string healthIssue = 14;
+    string healthHistoryRecord = 14;
     string allergy = 15;
     VisitDate visit = 16;
     string labResult = 18;
