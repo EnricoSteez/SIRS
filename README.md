@@ -77,8 +77,8 @@ After deploying the network, the following tasks are necessary:
 
 * Create the **Database** with: https://gist.github.com/enricoSteez/07da598d13a3bbc28edfa1fc8b111b19
 * Start the **PDP** server with `mvn exec:java -Dexec.mainClass="PDPServer" [-Dexec.args="PandemicMode"]` : the default operational mode is "NormalMode", adding "PandemicMode" as an argument will switch the permissions to Pandemic Mode
-* Start the **Application Server** with `mvn exec:java -Dexec.mainClass="ServerTls" -Dexec.args="50440 ../Keys/server.crt ../Keys/server.key <PDPServer_IP>:8980"`
-* Start the **Client** with `mvn exec:java -Dexec.mainClass="Client" -Dexec.args="localhost 50440 ../Keys/rootCA.crt"`
+* Start the **Application Server** with `mvn exec:java -Dexec.mainClass="ServerTls" -Dexec.args="50440 <PDPServer_IP>:8980"`
+* Start the **Client** with `mvn exec:java -Dexec.mainClass="Client" -Dexec.args="localhost 50440"`
 
 
 ### Prerequisites
