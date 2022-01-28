@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Client {
+    public static final ReadPropertyFile configReader = new ReadPropertyFile();
     private static final Logger logger = Logger.getLogger(Client.class.getName());
 
     private static HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
@@ -254,27 +255,20 @@ public class Client {
     public static void main(String[] args) throws Exception {
 
 
-        if (args.length < 2 || args.length == 4 || args.length > 5) {
-            System.out.println("USAGE: Client host port trustCertCollectionFilePath ");
+        if (args.length != 2) {
+            System.out.println("USAGE: Client host port");
             System.exit(0);
         }
+        System.out.println(configReader.getProperty("private_key_path"));
 
-        //TODO get from arguments:
-        privateKey = RSAOperations.getPrivateKeyFromFile("../Keys/server.key");
-        certificate = RSAOperations.readFile("../Keys/server.crt");
+        privateKey = RSAOperations.getPrivateKeyFromFile(configReader.getProperty("private_key_path"));
+        certificate = RSAOperations.readFile(configReader.getProperty("certificate_path"));
 
         // If only defaults are necessary, you can use TlsChannelCredentials.create() instead of
         // interacting with the Builder.
         TlsChannelCredentials.Builder tlsBuilder = TlsChannelCredentials.newBuilder();
-        switch (args.length) {
-            case 5:
-                tlsBuilder.keyManager(new File(args[3]), new File(args[4]));
-                // fallthrough
-            case 3:
-                tlsBuilder.trustManager(new File(args[2]));
-                // fallthrough
-            default:
-        }
+        tlsBuilder.trustManager(new File(configReader.getProperty("ca_path")));
+
         String host = args[0];
         int port = Integer.parseInt(args[1]);
         ManagedChannel channel = Grpc.newChannelBuilderForAddress(host, port, tlsBuilder.build())

@@ -18,6 +18,7 @@ public class ServerTls {
     private static final Logger logger = Logger.getLogger(ServerTls.class.getName());
 
     public static final String certificatesPath = "UserCertificates" + File.separator;
+    public static final ReadPropertyFile config = new ReadPropertyFile();
 
     private Server server;
     private final int port;
@@ -77,27 +78,21 @@ public class ServerTls {
      */
     public static void main (String[] args) throws IOException, InterruptedException {
 
-        if (args.length != 4) {
+        if (args.length != 2) {
             System.out.println(
-                    "USAGE: ServerTls port certChainFilePath privateKeyFilePath PDPaddress:PDPport");
+                    "USAGE: ServerTls port PDPaddress:PDPport");
             System.exit(0);
         }
 
         //check if it is needed to create a Certificates Directory
         checkCertificatesDir();
 
-        // If only providing a private key, you can use TlsServerCredentials.create() instead of
-        // interacting with the Builder.
-
 
         TlsServerCredentials.Builder tlsBuilder = TlsServerCredentials.newBuilder()
-                .keyManager(new File(args[1]), new File(args[2]));
-
-//        tlsBuilder.trustManager(new File(args[3]));
-//        tlsBuilder.clientAuth(TlsServerCredentials.ClientAuth.REQUIRE);
+                .keyManager(new File(config.getProperty("certificate_path")), new File(config.getProperty("private_key_path")));
 
         final ServerTls server = new ServerTls(
-                Integer.parseInt(args[0]), tlsBuilder.build(), args[3]);
+                Integer.parseInt(args[0]), tlsBuilder.build(), args[1]);
 
         server.start();
         server.blockUntilShutdown();

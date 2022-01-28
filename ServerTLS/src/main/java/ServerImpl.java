@@ -101,12 +101,15 @@ public class ServerImpl {
         }
 
         try{
-            System.setProperty("javax.net.ssl.trustStore", "../Keys/DBKeys/dbtruststore");
-            System.setProperty("javax.net.ssl.trustStorePassword", "password");
+            System.setProperty("javax.net.ssl.trustStore", ServerTls.config.getProperty("truststore_path"));
+            System.setProperty("javax.net.ssl.trustStorePassword", ServerTls.config.getProperty("truststore_pass"));
 
             Class.forName("com.mysql.jdbc.Driver");
+
             con= DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/main","root","ga38");
+                ServerTls.config.getProperty("db_url"),
+                    ServerTls.config.getProperty("db_username"),
+                    ServerTls.config.getProperty("db_password"));
             
             // sirs is the database name, root is the user and last parameter is the password: use null if no password is set!!
         } catch (ClassNotFoundException|SQLException e) {
