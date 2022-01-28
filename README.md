@@ -117,12 +117,19 @@ generate csr (certifacte signing request):
   ```openssl req -key 'client_name'.key -new -out 'client_name'.csr```
   
 Create 'client_name'.ext file with following contents:
-	```authorityKeyIdentifier=keyid,issuer
+	```
+	authorityKeyIdentifier=keyid,issuer
+	
 	basicConstraints=CA:FALSE
+	
 	subjectAltName = @alt_names
+	
 	[alt_names]
+	
 	IP.1 = client_ip
-	DNS.2 = localhost ```
+	
+	DNS.2 = localhost
+	```
 	
 Sign csr with certificate authority:
 ```openssl x509 -req -CA 'path_to_rootCA.crt' -CAkey 'path_to_rootCA.key' -in 'client_name'.csr -out 'client_name'.crt -days 365 -CAcreateserial -extfile 'client_name'.ext```
