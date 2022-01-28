@@ -1,8 +1,5 @@
 # eHealth
 
-Begin with an introductory paragraph that tells readers the purpose of your software and its major benefits. 
-Give them a summary of the information you will include in your ReadMe using clearly defined sections.
-
 This README contains detailed information on eHealth, an information system tailored for hospitals and private clinics to track the status of patients. The system various security systems and access control mechanisms to protect unauthorized users to access critical information regarding patients, therefore preserving their privacy.
 After General Information on eHealth, this document specifies the technical details and requirements to deploy, test and use the system.
 
