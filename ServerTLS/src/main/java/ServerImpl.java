@@ -273,8 +273,7 @@ public class ServerImpl {
                 statement.setInt(1,patientID);
                 ResultSet res = statement.executeQuery();
                 while(res.next()) {
-                    java.sql.Date date = res.getDate("NameSurname");
-                    //TODO somehow get the right date from sql
+                    java.sql.Date date = res.getDate("VisitDate");
                     LocalDate lDate = date.toLocalDate();
                     VisitDate vDate = VisitDate.newBuilder()
                             .setDay(lDate.getDayOfMonth())
