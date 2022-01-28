@@ -66,12 +66,16 @@ public class ServerImpl {
     private static final String INSERT_ALLERGY_P_ST = "INSERT INTO medical_records (Allergies) VALUES (?)";
     private static final String INSERT_VISIT_P_ST = "INSERT INTO clinic_visits (PatientID,VisitDate) VALUES (?,?)";
     private static final String INSERT_LAB_RESULT_P_ST = "INSERT INTO lab_results (PatientID,Results) VALUES (?,?)";
+    private static final String INSERT_SIGNATURE_P_ST = "INSERT INTO signature (patientID,record,record_pk,signerId,signature) VALUES (?,?,?,?,?)";
     //UPDATING VALUE:
     private static final String UPDATE_NAME_SURNAME_P_ST = "UPDATE medical_records SET NameSurname = ? WHERE PatientID = ?";
     private static final String UPDATE_PERSONAL_DATA_P_ST = "UPDATE medical_records SET email = ?, HomeAddress = ?, HealthNumber = ? WHERE PatientID = ?";
     private static final String UPDATE_HEALTH_HISTORY_P_ST = "UPDATE medical_records SET HealthHistory = ? WHERE PatientID = ?";
     private static final String UPDATE_ALLERGY_P_ST = "UPDATE medical_records SET Allergies = ? WHERE PatientID = ?";
 
+    private enum SignatureType{
+        NAME_SURNAME, PERSONAL_DATA, PROBLEMS, MEDICATIONS, HEALTH_HISTORY, ALLERGIES, VISITS_HISTORY, LAB_RESULTS
+    }
 
     public static ServerImpl getInstance(String target) {
         if(instance == null)
@@ -359,7 +363,24 @@ public class ServerImpl {
         return patientInfoReply.build();
     }
 
-    private void insertPatientInfo(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder){
+    private void insertSignature(int patientID, SignatureType type, int recordPk, int signerId, byte[] signature){
+        try {
+            Blob blob = con.createBlob();
+            blob.setBytes(1,signature);
+
+            PreparedStatement statement = con.prepareStatement(INSERT_SIGNATURE_P_ST);
+            statement.setInt(1,patientID);
+            statement.setString(2,type.name());
+            statement.setInt(3,recordPk);
+            statement.setInt(4,signerId);
+            statement.setBlob(5,blob);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void insertPatientInfo(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder, byte[] signature, int signerId){
         request.getFieldsCase();
         int patientId = 0;
         try {
@@ -381,6 +402,7 @@ public class ServerImpl {
                     rs = statement.getGeneratedKeys();
                     if (rs.next()) {
                         patientId = rs.getInt(1);
+                        insertSignature(patientId, SignatureType.NAME_SURNAME, 0, signerId, signature);
                     }
                     break;
                 case PERSONALDATA:
@@ -399,12 +421,13 @@ public class ServerImpl {
                     rs = statement.getGeneratedKeys();
                     if (rs.next()) {
                         patientId = rs.getInt(1);
+                        insertSignature(patientId, SignatureType.PERSONAL_DATA, 0, signerId, signature);
                     }
                     break;
                 case PROBLEMS:
                     patientId = request.getPatientID();
                     String problem = request.getProblems();
-                    statement = con.prepareStatement(INSERT_PROBLEMS_P_ST);
+                    statement = con.prepareStatement(INSERT_PROBLEMS_P_ST, Statement.RETURN_GENERATED_KEYS);
                     statement.setInt(1,patientId);
                     statement.setString(2,problem);
 
@@ -414,11 +437,16 @@ public class ServerImpl {
                         return;
                     }
 
+                    rs = statement.getGeneratedKeys();
+                    if (rs.next()) {
+                        insertSignature(patientId, SignatureType.PROBLEMS, rs.getInt(1), signerId, signature);
+                    }
+
                     break;
                 case MEDICATIONS:
                     patientId = request.getPatientID();
                     String medication = request.getMedications();
-                    statement = con.prepareStatement(INSERT_MEDICATIONS_P_ST);
+                    statement = con.prepareStatement(INSERT_MEDICATIONS_P_ST, Statement.RETURN_GENERATED_KEYS);
                     statement.setInt(1,patientId);
                     statement.setString(2,medication);
 
@@ -427,6 +455,12 @@ public class ServerImpl {
                         writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
+
+                    rs = statement.getGeneratedKeys();
+                    if (rs.next()) {
+                        insertSignature(patientId, SignatureType.MEDICATIONS, rs.getInt(1), signerId, signature);
+                    }
+
                     break;
                 case HEALTHHISTORYRECORD:
                     String healthHistory = request.getHealthHistoryRecord();
@@ -442,6 +476,7 @@ public class ServerImpl {
                     rs = statement.getGeneratedKeys();
                     if (rs.next()) {
                         patientId = rs.getInt(1);
+                        insertSignature(patientId, SignatureType.HEALTH_HISTORY, 0, signerId, signature);
                     }
                     break;
                 case ALLERGY:
@@ -458,13 +493,14 @@ public class ServerImpl {
                     rs = statement.getGeneratedKeys();
                     if (rs.next()) {
                         patientId = rs.getInt(1);
+                        insertSignature(patientId, SignatureType.ALLERGIES, 0, signerId, signature);
                     }
                     break;
                 case VISIT:
                     patientId = request.getPatientID();
                     VisitDate date = request.getVisit();
                     LocalDate lDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
-                    statement = con.prepareStatement(INSERT_VISIT_P_ST);
+                    statement = con.prepareStatement(INSERT_VISIT_P_ST,  Statement.RETURN_GENERATED_KEYS);
                     statement.setInt(1,patientId);
                     statement.setDate(2,java.sql.Date.valueOf( lDate ));
 
@@ -473,11 +509,16 @@ public class ServerImpl {
                         writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
+
+                    rs = statement.getGeneratedKeys();
+                    if (rs.next()) {
+                        insertSignature(patientId, SignatureType.VISITS_HISTORY, rs.getInt(1), signerId, signature);
+                    }
                     break;
                 case LABRESULT:
                     patientId = request.getPatientID();
                     String labResult = request.getLabResult();
-                    statement = con.prepareStatement(INSERT_LAB_RESULT_P_ST);
+                    statement = con.prepareStatement(INSERT_LAB_RESULT_P_ST, Statement.RETURN_GENERATED_KEYS);
                     statement.setInt(1,patientId);
                     statement.setString(2,labResult);
 
@@ -486,12 +527,18 @@ public class ServerImpl {
                         writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
+
+                    rs = statement.getGeneratedKeys();
+                    if (rs.next()) {
+                        insertSignature(patientId, SignatureType.LAB_RESULTS, rs.getInt(1), signerId, signature);
+                    }
                     break;
             }
 
         } catch (SQLException e) {
             writeBuilder.setOk(false);
             System.out.println("SQL exception");
+            e.printStackTrace();
             writeBuilder.setErrorType(ErrorType.SQL_ERROR);
             return;
         }
@@ -500,7 +547,7 @@ public class ServerImpl {
         writeBuilder.setOk(true);
     }
 
-    private void updatePatientInfo(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder){
+    private void updatePatientInfo(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder, byte[] signature, int signerId){
         request.getFieldsCase();
         int patientId = request.getPatientID();
         try {
@@ -517,6 +564,8 @@ public class ServerImpl {
                         writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
+
+                    insertSignature(patientId, SignatureType.NAME_SURNAME, 0, signerId, signature);
                     break;
                 case PERSONALDATA:
                     PersonalData pData = request.getPersonalData();
@@ -531,6 +580,8 @@ public class ServerImpl {
                         writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
+
+                    insertSignature(patientId, SignatureType.PERSONAL_DATA, 0, signerId, signature);
                     break;
                 case HEALTHHISTORYRECORD:
                     String healthHistory = request.getHealthHistoryRecord();
@@ -543,6 +594,8 @@ public class ServerImpl {
                         writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
+
+                    insertSignature(patientId, SignatureType.HEALTH_HISTORY, 0, signerId, signature);
                     break;
                 case ALLERGY:
                     String allergy = request.getAllergy();
@@ -555,6 +608,8 @@ public class ServerImpl {
                         writeBuilder.setErrorType(ErrorType.SQL_ERROR);
                         return;
                     }
+
+                    insertSignature(patientId, SignatureType.ALLERGIES, 0, signerId, signature);
                     break;
             }
 
@@ -569,7 +624,7 @@ public class ServerImpl {
         writeBuilder.setOk(true);
     }
 
-    private void checkInsertOrUpdate(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder){
+    private void checkInsertOrUpdate(WritePatientInfoRequest request, WritePatientInfoReply.Builder writeBuilder, byte[] signature, int signerId){
         if(request.getPatientID() == 0){
             //user didnt select patient id
             //For these cases we need an id
@@ -582,7 +637,7 @@ public class ServerImpl {
                 writeBuilder.setErrorType(ErrorType.PATIENT_DOES_NOT_EXIST);
                 return;
             }else{
-                insertPatientInfo(request, writeBuilder);
+                insertPatientInfo(request, writeBuilder, signature, signerId);
             }
         }else{
             //If want to write on specific patient, and said patient doesnt exist
@@ -596,9 +651,9 @@ public class ServerImpl {
                     request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.PROBLEMS ||
                     request.getFieldsCase() == WritePatientInfoRequest.FieldsCase.VISIT){
 
-                insertPatientInfo(request, writeBuilder);
+                insertPatientInfo(request, writeBuilder, signature, signerId);
             }else{
-                updatePatientInfo(request, writeBuilder);
+                updatePatientInfo(request, writeBuilder, signature, signerId);
             }
         }
     }
@@ -639,7 +694,7 @@ public class ServerImpl {
         System.out.println("Signature matched");
 
         //signature matches, has permission, start writing
-        checkInsertOrUpdate(request, writeBuilder);
+        checkInsertOrUpdate(request, writeBuilder, request.getSignature().getSignature().toByteArray(), userId);
 
         return writeBuilder.build();
     }
