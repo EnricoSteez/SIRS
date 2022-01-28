@@ -12,3 +12,5 @@ buildNumber.properties
 ServerTLS/target/
 Client/target/
 ServerTLS/UserCertificates/
+ServeerTLS/config.properties
+Client/config.properties
