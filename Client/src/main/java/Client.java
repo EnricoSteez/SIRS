@@ -4,13 +4,13 @@ import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import io.grpc.TlsChannelCredentials;
-
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.*;
@@ -25,11 +25,11 @@ public class Client {
     private static HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
     private static final String signatureAlg = "SHA256withRSA";
     private static Role userRole = Role.ADMIN;
-    private static int userID = 1;
+//    private static int userID = 1;
     private static String sessionToken = "";
     private static RSAPrivateKey privateKey;
     private static String certificate;
-    private static Random rand = new Random();
+    private static final Random rand = new Random();
 //    private static String loggedUser = null;
 
     /**
@@ -38,6 +38,7 @@ public class Client {
     public Client(Channel channel) {
         blockingStub = HospitalServiceGrpc.newBlockingStub(channel);
 //        logger.setLevel(Level.FINEST);
+        Logger.getLogger("io.netty").setLevel(Level.OFF);
     }
 
     public static void printErrorMessage(ErrorType type){
@@ -113,7 +114,7 @@ public class Client {
         if(reply.getCode() == LoginReply.Code.SUCCESS) {
             userRole = reply.getRole();
 //            loggedUser = username;
-            userID = reply.getUserId();
+//            userID = reply.getUserId();
             sessionToken = reply.getToken();
         }
         return reply.getCode();
@@ -179,11 +180,11 @@ public class Client {
             //ROLES START FROM ZERO AND SELECTIONS ARE USER-FRIENDLY
             Role role = Role.forNumber(selection-1);
 
-            System.out.println("You have chosen:");
-            System.out.println("USERNAME:" + username);
-            System.out.println("PASSWORD:" + Arrays.toString(password));
+//            System.out.println("You have chosen:");
+//            System.out.println("USERNAME:" + username);
+//            System.out.println("PASSWORD:" + Arrays.toString(password));
             assert role != null;
-            System.out.println("ROLE:" + role.name());
+//            System.out.println("ROLE:" + role.name());
 
 
             RegisterRequest request = RegisterRequest.newBuilder()
@@ -194,6 +195,10 @@ public class Client {
                     .build();
             System.err.println("Register Request is: " + username + " ~ " + Arrays.toString(password) + " ~ " + role.name());
             RegisterReply reply = blockingStub.register(request);
+
+            //WIPE PASSWORD FROM MEMORY
+            new SecureRandom().nextBytes(toBytes(password));
+            new SecureRandom().nextBytes(passwordBytes);
 
             successfulRegister = reply.getOk();
             if(successfulRegister)

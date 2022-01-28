@@ -84,10 +84,22 @@ After deploying the network, the following tasks are necessary:
 ### Prerequisites
 
 All the machines must be running Linux and have Java installed.
-The **Database** machine must have mysql installed
+The **Database** and **PEP** machine must have mysql installed
 
 ```
-Give installation command examples
+#ON EVERY MACHINE
+sudo apt update
+sudo apt upgrade
+sudo apt install maven
+
+#ON THE PEP MACHINE
+sudo apt install mysql-server
+
+#ON THE DATABASE MACHINE
+sudo apt install mysql-server
+sudo mysql_secure_installation
+  //Define a strong password
+  //Accept every security recommendations
 ```
 
 ### Installing
@@ -96,18 +108,127 @@ Give step-by-step instructions on building and running the application on the de
 
 Describe the step.
 
+#### Configuration of the **Database** machine
+
+Create an user
 ```
-sudo apt update
-sudo apt install mysql-server
+sudo mysql
+  CREATE USER 'user'@'localhost_or_IP' IDENTIFIED BY 'password';
+  GRANT ALL PRIVILEGES ON 'database_name'.* TO 'user'@'localhost_or_IP';
+  exit
 ```
 
-And repeat.
-
+Configure SSL keys
 ```
-until finished
+#In the file /etc/mysql/my.cnf add with your own *.crt and *.key:
+  [mysqld]
+  ssl
+  ssl-cipher=DHE-RSA-AES256-SHA
+  ssl-ca=/mysql_keys/rootCA.crt
+  ssl-cert=/mysql_keys/db.crt
+  ssl-key=/mysql_keys/db.key
+  
+  [client]
+  ssl-mode=REQUIRED
+  ssl-cert=/mysql_keys/server.crt
+  ssl-key=/mysql_keys/server.key
+
+#In the folder /etc/mysql/mysql_keys copy you *.crt and *.key
+
+service mysql restart
+sudo mysql
+  show variables like '%ssl%';    //Check if your changes have been taken into account
+  exit
 ```
 
-You can also add screenshots to show expected results, when relevant.
+Allow the remote connection
+```
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+#Change the bind-address to the desired address
+```
+
+Import your database script
+```
+sudo mysql
+  CREATE DATABASE 'database_name';
+  exit
+
+sudo mysql 'database_name' < 'database_script'.sql
+```
+
+#### Configuration of the **Firewall** machines
+
+For the **Firewall** between the **Client** and the **PEP**, find the tcp ports used for communication //tcpdump is your friend ;)
+```
+sudo iptables -P FORWARD DROP
+sudo iptables -A FORWARD -p tcp <from_port>:<until_port> -j ACCEPT
+```
+
+For the **Firewall** of the **Client**, you can adapt the configuration according to your preference
+```
+sudo iptables -P FORWARD DROP
+sudo iptables -t nat -A POSTROUTING  -o <external_network_interface> -j MASQUERADE
+iptables -A FORWARD -i <internal_network_interface> -p tcp --dport 80 -j ACCEPT
+iptables -A FORWARD -i <internal_network_interface> -p tcp --dport 443 -j ACCEPT
+iptables -A FORWARD -o <internal_network_interface> -p tcp --sport 80 -j ACCEPT
+iptables -A FORWARD -o <internal_network_interface> -p tcp --sport 443 -j ACCEPT
+iptables -A FORWARD -i <internal_network_interface> -p tcp --sport 80 -j ACCEPT
+iptables -A FORWARD -i <internal_network_interface> -p tcp --sport 443 -j ACCEPT
+iptables -A FORWARD -o <internal_network_interface> -p tcp --dport 80 -j ACCEPT
+iptables -A FORWARD -o <internal_network_interface> -p tcp --dport 443 -j ACCEPT
+```
+
+To make them persistent
+```
+sudo apt install iptables-persistent
+#At the first installation, it will ask to save your rules automatically.
+
+#But for the next saves
+#To save
+sudo iptables-save > /etc/iptables/rules.v4
+
+#To restore manually
+sudo iptables-restore < /etc/iptables/rules.v4
+
+
+#To run them at the boot, inside /etc/network/interfaces
+  iface <network_interface> inet static
+    address ...
+    netmask ...
+    gateway ...
+    ...
+    pre-up iptables-restore < /etc/network/iptables.rules.v4
+```
+
+#### Useful network commands
+
+IP Forwarding
+```
+#To check
+sysctl net.ipv4.ip_forward
+
+#Enable IP forwarding
+#Inside /etc/sysctl.conf, uncomment
+	net.ipv4.ip_forward=1
+sysctl -p
+```
+
+Routing
+```
+#Add a route
+sudo ip route add <network_to_reach>/<netmask> via <network_reachable>
+
+#Delete a route
+sudo ip route del <network_to_reach>/<netmask> via <network_reachable>
+
+#Make them persistent, inside /etc/network/interfaces
+  iface <network_interface> inet static
+    address ...
+    netmask ...
+    ...
+    up route add -net <network_to_reach> netmask <netmask_IP_format> gw <network_reachable>
+    down route del -net <network_to_reach> netmask <netmask_IP_format> gw <network_reachable>
+```
 
 ### Testing
 
