@@ -230,7 +230,6 @@ public class Client {
             SignatureM signature = SignatureM.newBuilder()
                     .setSignature(ByteString.copyFrom(signedNonce))
                     .setCryptAlgo(signatureAlg)
-                    .setNonce(rand.nextInt())
                     .build();
             //System.out.println(certificateStr);
             RegisterCertificateRequest request = RegisterCertificateRequest.newBuilder()
@@ -549,7 +548,6 @@ public class Client {
 
         SignatureM signatureM = SignatureM.newBuilder()
                 .setCryptAlgo(signatureAlg)
-                .setNonce(rand.nextInt())
                 .setSignature(signature)
                 .build();
 

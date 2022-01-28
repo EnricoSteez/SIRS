@@ -71,7 +71,7 @@ message MedicalRecords {
 }
 
 message PersonalData {
-  optional string homeAddress = 4;
+  string homeAddress = 4;
   string email = 5;
   int32 healthNumber = 6;
 }
@@ -137,7 +137,6 @@ message RegisterCertificateReply{
 message SignatureM{
   bytes signature = 1;
   string cryptAlgo = 2;
-  int32 nonce = 3;
 }
 
 message PatientInfo{
