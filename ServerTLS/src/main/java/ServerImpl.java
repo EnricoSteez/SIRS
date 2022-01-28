@@ -606,6 +606,9 @@ public class ServerImpl {
 
         //CHECKING IF USER HAS PERMISSION:
         String xacmlRequest = createRequestString(whoami, request.getFieldsCase(), "write");
+
+        System.out.println("Created REQUEST:");
+        System.out.println(toPrettyString(xacmlRequest,2));
         AccessControlRequest acRequest = AccessControlRequest.newBuilder().setXacmlRequest(xacmlRequest).build();
         AccessControlReply reply = blockingStub.validateAccess(acRequest);
         String xacmlReply = reply.getXacmlReply();
