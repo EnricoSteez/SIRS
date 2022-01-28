@@ -139,7 +139,7 @@ edit Client/config.properties file with new certificate and key paths
 
 #### Configuration of the **Database** machine
 
-Create an user
+Create a user
 ```
 sudo mysql
   CREATE USER 'user'@'localhost_or_IP' IDENTIFIED BY 'password';
@@ -265,59 +265,10 @@ sudo ip route del <network_to_reach>/<netmask> via <network_reachable>
     down route del -net <network_to_reach> netmask <netmask_IP_format> gw <network_reachable>
 ```
 
-### Testing
-
-Explain how to run the automated tests for this system.
-
-Give users explicit instructions on how to run all necessary tests. 
-Explain the libraries, such as JUnit, used for testing your software and supply all necessary commands.
-
-Explain what these tests test and why
-
-```
-Give an example command
-```
-
-## Demo
-
-Give a tour of the best features of the application.
-Add screenshots when relevant.
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system e.g. a host or a cloud provider.
-
-Mention virtualization/container tools and commands.
-
-```
-Give an example command
-```
-
-Provide instructions for connecting to servers and tell clients how to obtain necessary permissions.
-
 ## Additional Information
 
 ### Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
-### Versioning
-
-We use [SemVer](http://semver.org/) for versioning. 
-For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
-
-### License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-### Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-### Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* **Enrico Giorio** - [enricoSteez](https://github.com/enricoSteez)
+* **Daniel Correia** - [DanielCorreia21](https://github.com/DanielCorreia21)
+* **Luxithan Kailairajan** - [Luxithan](https://github.com/Luxithan)
