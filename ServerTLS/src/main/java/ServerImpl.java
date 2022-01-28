@@ -50,7 +50,7 @@ public class ServerImpl {
     private static final String RETRIEVE_NAME_SURNAME_P_ST = "SELECT NameSurname from medical_records WHERE PatientID = ?";
     private static final String RETRIEVE_PERSONAL_DATA_P_ST = "SELECT email,HomeAddress,HealthNumber from medical_records WHERE PatientID = ?";
     private static final String RETRIEVE_PROBLEMS_P_ST = "SELECT ProblemDescription from problems WHERE PatientID = ?";
-    private static final String RETRIEVE_MEDICATIONS_P_ST = "SELECT Medicine,Quantity,Description from medications WHERE PatientID = ?";
+    private static final String RETRIEVE_MEDICATIONS_P_ST = "SELECT Description from medications WHERE PatientID = ?";
     private static final String RETRIEVE_HEALTH_HISTORY_P_ST = "SELECT HealthHistory from medical_records WHERE PatientID = ?";
     private static final String RETRIEVE_ALLERGIES_P_ST = "SELECT Allergies from medical_records WHERE PatientID = ?";
     private static final String RETRIEVE_VISITS_HISTORY_P_ST = "SELECT VisitDate from clinic_visits WHERE PatientID = ?";
@@ -61,7 +61,7 @@ public class ServerImpl {
     private static final String INSERT_NAME_SURNAME_P_ST = "INSERT INTO medical_records (NameSurname) VALUES (?)";
     private static final String INSERT_PERSONAL_DATA_P_ST = "INSERT INTO medical_records (email,HomeAddress,HealthNumber) VALUES (?,?,?)";
     private static final String INSERT_PROBLEMS_P_ST = "INSERT INTO problems (PatientID,ProblemDescription) VALUES (?,?)";
-    private static final String INSERT_MEDICATIONS_P_ST = "INSERT INTO medications (PatientID,Medicine) VALUES (?,?)";
+    private static final String INSERT_MEDICATIONS_P_ST = "INSERT INTO medications (PatientID,Description) VALUES (?,?)";
     private static final String INSERT_HEALTH_HISTORY_P_ST = "INSERT INTO medical_records (HealthHistory) VALUES (?)";
     private static final String INSERT_ALLERGY_P_ST = "INSERT INTO medical_records (Allergies) VALUES (?)";
     private static final String INSERT_VISIT_P_ST = "INSERT INTO clinic_visits (PatientID,VisitDate) VALUES (?,?)";
@@ -236,24 +236,18 @@ public class ServerImpl {
                 PreparedStatement statement = con.prepareStatement(RETRIEVE_PROBLEMS_P_ST);
                 statement.setInt(1,patientID);
                 ResultSet res = statement.executeQuery();
-                int counter = 0;
                 while(res.next()) {
                     String problem = res.getString("ProblemDescription");
-                    replyToPut.setProblems(counter, problem);
-                    counter++;
+                    replyToPut.addProblems(problem);
                 }
             }
             else if("Medications".equalsIgnoreCase(chosen)){
                 PreparedStatement statement = con.prepareStatement(RETRIEVE_MEDICATIONS_P_ST);
                 statement.setInt(1,patientID);
                 ResultSet res = statement.executeQuery();
-                int counter = 0;
                 while (res.next()) {
-                    String medicine = res.getString("Medicine");
-                    String quantity = res.getString("Quantity");
                     String description = res.getString("Description");
-                    replyToPut.setMedications(counter, "Name: " + medicine + "\n Quantity: " + quantity + "\nDescription: " + description);
-                    counter++;
+                    replyToPut.addMedications(description);
                 }
             }
             else if("HealthHistory".equalsIgnoreCase(chosen)){
@@ -278,7 +272,6 @@ public class ServerImpl {
                 PreparedStatement statement = con.prepareStatement(RETRIEVE_VISITS_HISTORY_P_ST);
                 statement.setInt(1,patientID);
                 ResultSet res = statement.executeQuery();
-                int counter = 0;
                 while(res.next()) {
                     java.sql.Date date = res.getDate("NameSurname");
                     //TODO somehow get the right date from sql
@@ -288,19 +281,16 @@ public class ServerImpl {
                             .setMonth(lDate.getMonthValue())
                             .setYear(lDate.getYear())
                             .build();
-                    replyToPut.setVisitsHistory(counter, vDate);
-                    counter++;
+                    replyToPut.addVisitsHistory(vDate);
                 }
             }
             else if("LabResults".equalsIgnoreCase(chosen)){
                 PreparedStatement statement = con.prepareStatement(RETRIEVE_LAB_RESULTS_P_ST);
                 statement.setInt(1,patientID);
                 ResultSet res = statement.executeQuery();
-                int counter = 0;
                 while(res.next()) {
                     String labResults = res.getString("Results");
-                    replyToPut.setLabResults(counter, labResults);
-                    counter++;
+                    replyToPut.addLabResults(labResults);
                 }
             }
         } catch (SQLException e) {
@@ -674,6 +664,8 @@ public class ServerImpl {
         System.out.println(toPrettyString(xacmlReply,2));
         PatientInfoReply.Builder patientInfoReply = getAccessControlOutcome(xacmlReply);
         boolean permit = patientInfoReply.getPermission();
+        //TODO remove:
+        permit = true;
         String advice = patientInfoReply.getPdpAdvice();
         if(!permit){
             writeBuilder.setOk(false);
