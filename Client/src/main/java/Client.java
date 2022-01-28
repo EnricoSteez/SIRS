@@ -449,7 +449,10 @@ public class Client {
                         boolean successful = reply.getOk();
                         if(successful)
                             System.out.println("WRITE PERFORMED ON PATIENT WITH ID: " + reply.getPatientId() + "!");
-                        else{
+                        else if(reply.getErrorType().equals(ErrorType.NOT_AUTHORIZED)){
+                            System.out.println("PERMISSION DENIED");
+                            System.out.println(reply.getPdpAdvice());
+                        }else{
                             System.out.println("SERVER-SIDE ERROR OCCURRED, CHECK SERVER LOGS");
                             printErrorMessage(reply.getErrorType());
                         }

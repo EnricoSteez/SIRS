@@ -106,7 +106,7 @@ public class ServerImpl {
 
             Class.forName("com.mysql.jdbc.Driver");
             con= DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/sirs","root",null);
+                "jdbc:mysql://localhost:3306/main","root","ga38");
             
             // sirs is the database name, root is the user and last parameter is the password: use null if no password is set!!
         } catch (ClassNotFoundException|SQLException e) {
@@ -326,6 +326,7 @@ public class ServerImpl {
         System.out.println(toPrettyString(xacmlReply,2));
 
         PatientInfoReply.Builder patientInfoReply = getAccessControlOutcome(xacmlReply);
+
         //this builder that I got from the outcome has already the permission bit and, eventually, the advice, set.
         //now I just need to add the actual records if the decision was Permit
 
@@ -347,6 +348,8 @@ public class ServerImpl {
                 }
             }
             patientInfoReply.setRecords(mRecordsBuilder.build());
+            patientInfoReply.setOk(true);
+            return patientInfoReply.build();
         } //else do nothing, the rest of the reply is already set
         //IF PERMISSION IS DENIED, THE PERMISSION BIT AND THE ADVICE ARE ALREADY SET BY THE getAccessControlOutcome() FUNCTION
         patientInfoReply.setErrorType(ErrorType.NOT_AUTHORIZED);
@@ -606,6 +609,8 @@ public class ServerImpl {
         AccessControlRequest acRequest = AccessControlRequest.newBuilder().setXacmlRequest(xacmlRequest).build();
         AccessControlReply reply = blockingStub.validateAccess(acRequest);
         String xacmlReply = reply.getXacmlReply();
+        System.out.println("RECEIVED XACML REPLY:");
+        System.out.println(toPrettyString(xacmlReply,2));
         PatientInfoReply.Builder patientInfoReply = getAccessControlOutcome(xacmlReply);
         boolean permit = patientInfoReply.getPermission();
         String advice = patientInfoReply.getPdpAdvice();
