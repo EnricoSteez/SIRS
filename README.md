@@ -108,6 +108,28 @@ Give step-by-step instructions on building and running the application on the de
 
 Describe the step.
 
+### Creating user certificates and keys
+
+generate private key:
+  openssl genpkey -out 'client_name'.key -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+  
+generate csr (certifacte signing request):
+  openssl req -key 'client_name'.key -new -out 'client_name'.csr
+  
+Create 'client_name'.ext file with following contents:
+	authorityKeyIdentifier=keyid,issuer
+	basicConstraints=CA:FALSE
+	subjectAltName = @alt_names
+	[alt_names]
+	IP.1 = client_ip
+	DNS.2 = localhost 
+	
+Sign csr with certificate authority:
+openssl x509 -req -CA 'path_to_rootCA.crt' -CAkey 'path_to_rootCA.key' -in 'client_name'.csr -out 'client_name'.crt -days 365 -CAcreateserial -extfile 'client_name'.ext
+
+edit Client/config.properties file with new certificate and key paths
+
+
 #### Configuration of the **Database** machine
 
 Create an user
@@ -133,7 +155,13 @@ Configure SSL keys
   ssl-cert=/mysql_keys/server.crt
   ssl-key=/mysql_keys/server.key
 
-#In the folder /etc/mysql/mysql_keys copy you *.crt and *.key
+#In the folder /etc/mysql/mysql_keys copy the *.crt and *.key files with matching names from folders Keys/ and Keys/DBKeys/
+
+#For new database certificates, create them as with the clients, and add them to a new truststore
+
+keytool -import -alias certificate_authority(root_CA.cer) -file database_certificate.cer -keystore strust_store_name -storepass password [Return]
+
+edit ServerTLS/config.properties file's fields to new trustore path and password
 
 service mysql restart
 sudo mysql
