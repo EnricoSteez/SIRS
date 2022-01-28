@@ -2,5 +2,6 @@ authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 subjectAltName = @alt_names
 [alt_names]
-DNS.1 = 10.0.100.100
+IP.1 = 10.0.100.100
+IP.2 = 10.0.100.1
 DNS.2 = localhost
