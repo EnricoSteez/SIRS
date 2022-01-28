@@ -950,26 +950,24 @@ public class ServerImpl {
     }
 
     private String createRequestString (Role whoami, WritePatientInfoRequest.FieldsCase type, String action) {
-        StringBuilder request = new StringBuilder(
-                "<Request xmlns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\" CombinedDecision=\"false\" ReturnPolicyIdList=\"false\">" +
-                        "     <Attributes Category=\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\">" +
-                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:subject:subject-id\" IncludeInResult=\"false\">" +
-                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + whoami + "</AttributeValue>" +
-                        "          </Attribute>" +
-                        "     </Attributes>" +
-                        "     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">" +
-                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">" +
-                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + convertTypeToName(type) + "</AttributeValue>" +
-                        "          </Attribute>" +
-                        "</Attributes>" +
-                        "     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\">" +
-                        "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\" IncludeInResult=\"false\">" +
-                        "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + action + "</AttributeValue>" +
-                        "          </Attribute>" +
-                        "     </Attributes>" +
-                        "</Request>");
 
-        return request.toString();
+        return "<Request xmlns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\" CombinedDecision=\"false\" ReturnPolicyIdList=\"false\">" +
+                "     <Attributes Category=\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\">" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:subject:subject-id\" IncludeInResult=\"false\">" +
+                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + whoami + "</AttributeValue>" +
+                "          </Attribute>" +
+                "     </Attributes>" +
+                "     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\">" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" IncludeInResult=\"false\">" +
+                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + convertTypeToName(type) + "</AttributeValue>" +
+                "          </Attribute>" +
+                "</Attributes>" +
+                "     <Attributes Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\">" +
+                "          <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\" IncludeInResult=\"false\">" +
+                "               <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">" + action + "</AttributeValue>" +
+                "          </Attribute>" +
+                "     </Attributes>" +
+                "</Request>";
     }
 
     private String toPrettyString(String xml, int indent) {
@@ -977,7 +975,7 @@ public class ServerImpl {
             // Turn xml string into a document
             Document document = DocumentBuilderFactory.newInstance()
                     .newDocumentBuilder()
-                    .parse(new InputSource(new ByteArrayInputStream(xml.getBytes("utf-8"))));
+                    .parse(new InputSource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))));
 
             // Remove whitespaces outside tags
             document.normalize();
