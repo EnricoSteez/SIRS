@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 
 public class Client {
     public static final ReadPropertyFile configReader = new ReadPropertyFile();
-    private static final Logger logger = Logger.getLogger(Client.class.getName());
+//    private static final Logger logger = Logger.getLogger(Client.class.getName());
 
     private static HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
     private static final String signatureAlg = "SHA256withRSA";
@@ -37,7 +37,7 @@ public class Client {
      */
     public Client(Channel channel) {
         blockingStub = HospitalServiceGrpc.newBlockingStub(channel);
-        logger.setLevel(Level.FINEST);
+//        logger.setLevel(Level.FINEST);
     }
 
     public static void printErrorMessage(ErrorType type){
@@ -77,16 +77,19 @@ public class Client {
      * Say hello to server.
      */
     public void greet(String name) {
-        logger.info("Will try to greet " + name + " ...");
+//        logger.info("Will try to greet " + name + " ...");
         HelloRequest request = HelloRequest.newBuilder().setName(name).build();
         HelloReply response;
         try {
             response = blockingStub.sayHello(request);
         } catch (StatusRuntimeException e) {
-            logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
+            System.err.println("RPC failed: " + e.getStatus());
+
+//            logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
             return;
         }
-        logger.info("Greeting: " + response.getMessage());
+        System.out.println("Greeting: " + response.getMessage());
+//        logger.info("Greeting: " + response.getMessage());
     }
 
     /**

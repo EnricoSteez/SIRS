@@ -664,8 +664,6 @@ public class ServerImpl {
         System.out.println(toPrettyString(xacmlReply,2));
         PatientInfoReply.Builder patientInfoReply = getAccessControlOutcome(xacmlReply);
         boolean permit = patientInfoReply.getPermission();
-        //TODO remove:
-        permit = true;
         String advice = patientInfoReply.getPdpAdvice();
         if(!permit){
             writeBuilder.setOk(false);
