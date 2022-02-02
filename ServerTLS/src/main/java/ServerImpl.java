@@ -144,7 +144,7 @@ public class ServerImpl {
 
         //length of the stored password: saltLength (16B) + hashlength (16B)
         try {
-            statement = con.prepareStatement("SELECT password FROM Users WHERE username=?");
+            statement = con.prepareStatement("SELECT password FROM users WHERE username=?");
             statement.setString(1,username);
             res = statement.executeQuery();
             if(res.next()) {
@@ -171,7 +171,7 @@ public class ServerImpl {
 
                 //------------------------------ CHECK FOR MATCH ------------------------------
                 if(Arrays.equals(databaseHash, userHash)) {
-                    statement = con.prepareStatement("SELECT CustomerId, Role FROM Users WHERE username=?");
+                    statement = con.prepareStatement("SELECT CustomerId, Role FROM users WHERE username=?");
                     statement.setString(1,username);
                     res = statement.executeQuery();
                     res.next();
@@ -763,7 +763,7 @@ public class ServerImpl {
         RegisterReply.Builder builder = RegisterReply.newBuilder();
         //------------------------------ CHECK IF USERNAME ALREADY EXISTS ------------------------------
         try {
-            PreparedStatement statement = con.prepareStatement("SELECT * from Users WHERE Username = ?");
+            PreparedStatement statement = con.prepareStatement("SELECT * from users WHERE Username = ?");
             statement.setString(1,username);
             ResultSet res = statement.executeQuery();
 
@@ -800,7 +800,7 @@ public class ServerImpl {
         try {
             Blob blob = con.createBlob();
             blob.setBytes(1,recordToStore);
-            PreparedStatement statement = con.prepareStatement("INSERT INTO Users (Username, Password, Role) VALUES (?,?,?)");
+            PreparedStatement statement = con.prepareStatement("INSERT INTO users (Username, Password, Role) VALUES (?,?,?)");
             statement.setString(1,username);
             statement.setBlob(2,blob);
             statement.setString(3, role.name());
