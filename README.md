@@ -190,10 +190,15 @@ sudo mysql 'database_name' < 'database_script'.sql
 
 #### Configuration of the **Firewall** machines
 
-For the **Firewall** between the **Client** and the **PEP**, find the tcp ports used for communication //tcpdump is your friend ;)
+For the **Firewall** between the **Client** and the **PEP**: find the tcp port used for the communication to allow it on the network interface between the **Firewall** and the **PEP**, and drop all other (white-listing)
 ```
 sudo iptables -P FORWARD DROP
-sudo iptables -A FORWARD -p tcp <from_port>:<until_port> -j ACCEPT
+sudo iptables -P INPUT DROP
+sudo iptables -P OUTPUT DROP
+sudo iptables -A FORWARD -i <network_interface> -p tcp --dport <port> -j ACCEPT
+sudo iptables -A FORWARD -i <network_interface> -p tcp --dport <port> -j ACCEPT
+sudo iptables -A FORWARD -o <network_interface> -p tcp --sport <port> -j ACCEPT
+sudo iptables -A FORWARD -o <network_interface> -p tcp --sport <port> -j ACCEPT
 ```
 
 For the **Firewall** of the **Client**, you can adapt the configuration according to your preference
