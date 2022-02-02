@@ -44,17 +44,6 @@
             <artifactId>grpc-netty-shaded</artifactId>
             <version>1.43.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>7.5</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.balana</groupId>
-            <artifactId>org.wso2.balana</artifactId>
-            <version>1.2.11</version>
-        </dependency>
 
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -69,19 +58,15 @@
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.att.research.xacml/xacml -->
-        <dependency>
-            <groupId>com.att.research.xacml</groupId>
-            <artifactId>xacml</artifactId>
-            <version>3.0</version>
-        </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.ow2.authzforce/authzforce-ce-core-pdp-engine -->
-        <dependency>
-            <groupId>org.ow2.authzforce</groupId>
-            <artifactId>authzforce-ce-core-pdp-engine</artifactId>
-            <version>17.1.2</version>
-        </dependency>
 
+
+        <dependency>
+            <groupId>org.wso2.balana</groupId>
+            <artifactId>org.wso2.balana</artifactId>
+            <version>1.2.11</version>
+
+        </dependency>
 
 
     </dependencies>
