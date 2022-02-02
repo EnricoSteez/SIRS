@@ -1,8 +1,5 @@
 # eHealth
 
-Begin with an introductory paragraph that tells readers the purpose of your software and its major benefits. 
-Give them a summary of the information you will include in your ReadMe using clearly defined sections.
-
 This README contains detailed information on eHealth, an information system tailored for hospitals and private clinics to track the status of patients. The system various security systems and access control mechanisms to protect unauthorized users to access critical information regarding patients, therefore preserving their privacy.
 After General Information on eHealth, this document specifies the technical details and requirements to deploy, test and use the system.
 
@@ -77,8 +74,8 @@ After deploying the network, the following tasks are necessary:
 
 * Create the **Database** with: https://gist.github.com/enricoSteez/07da598d13a3bbc28edfa1fc8b111b19
 * Start the **PDP** server with `mvn exec:java -Dexec.mainClass="PDPServer" [-Dexec.args="PandemicMode"]` : the default operational mode is "NormalMode", adding "PandemicMode" as an argument will switch the permissions to Pandemic Mode
-* Start the **Application Server** with `mvn exec:java -Dexec.mainClass="ServerTls" -Dexec.args="50440 ../Keys/server.crt ../Keys/server.key <PDPServer_IP>:8980"`
-* Start the **Client** with `mvn exec:java -Dexec.mainClass="Client" -Dexec.args="localhost 50440 ../Keys/rootCA.crt"`
+* Start the **Application Server** with `mvn exec:java -Dexec.mainClass="ServerTls" -Dexec.args="50440 <PDPServer_IP>:8980"`
+* Start the **Client** with `mvn exec:java -Dexec.mainClass="Client" -Dexec.args="localhost 50440"`
 
 
 ### Prerequisites
@@ -111,28 +108,35 @@ Describe the step.
 ### Creating user certificates and keys
 
 generate private key:
-  openssl genpkey -out 'client_name'.key -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+  ```openssl genpkey -out 'client_name'.key -algorithm RSA -pkeyopt rsa_keygen_bits:2048```
   
 generate csr (certifacte signing request):
-  openssl req -key 'client_name'.key -new -out 'client_name'.csr
+  ```openssl req -key 'client_name'.key -new -out 'client_name'.csr```
   
 Create 'client_name'.ext file with following contents:
-	authorityKeyIdentifier=keyid,issuer
-	basicConstraints=CA:FALSE
-	subjectAltName = @alt_names
-	[alt_names]
-	IP.1 = client_ip
-	DNS.2 = localhost 
-	
+```
+authorityKeyIdentifier=keyid,issuer
+
+basicConstraints=CA:FALSE
+
+subjectAltName = @alt_names
+
+[alt_names]
+
+IP.1 = client_ip
+
+DNS.2 = localhost
+```
+
 Sign csr with certificate authority:
-openssl x509 -req -CA 'path_to_rootCA.crt' -CAkey 'path_to_rootCA.key' -in 'client_name'.csr -out 'client_name'.crt -days 365 -CAcreateserial -extfile 'client_name'.ext
+```openssl x509 -req -CA 'path_to_rootCA.crt' -CAkey 'path_to_rootCA.key' -in 'client_name'.csr -out 'client_name'.crt -days 365 -CAcreateserial -extfile 'client_name'.ext```
 
 edit Client/config.properties file with new certificate and key paths
 
 
 #### Configuration of the **Database** machine
 
-Create an user
+Create a user
 ```
 sudo mysql
   CREATE USER 'user'@'localhost_or_IP' IDENTIFIED BY 'password';
@@ -186,10 +190,15 @@ sudo mysql 'database_name' < 'database_script'.sql
 
 #### Configuration of the **Firewall** machines
 
-For the **Firewall** between the **Client** and the **PEP**, find the tcp ports used for communication //tcpdump is your friend ;)
+For the **Firewall** between the **Client** and the **PEP**: find the tcp port used for the communication to allow it on the network interface between the **Firewall** and the **PEP**, and drop all other (white-listing)
 ```
 sudo iptables -P FORWARD DROP
-sudo iptables -A FORWARD -p tcp <from_port>:<until_port> -j ACCEPT
+sudo iptables -P INPUT DROP
+sudo iptables -P OUTPUT DROP
+sudo iptables -A FORWARD -i <network_interface> -p tcp --dport <port> -j ACCEPT
+sudo iptables -A FORWARD -i <network_interface> -p tcp --dport <port> -j ACCEPT
+sudo iptables -A FORWARD -o <network_interface> -p tcp --sport <port> -j ACCEPT
+sudo iptables -A FORWARD -o <network_interface> -p tcp --sport <port> -j ACCEPT
 ```
 
 For the **Firewall** of the **Client**, you can adapt the configuration according to your preference
@@ -258,59 +267,10 @@ sudo ip route del <network_to_reach>/<netmask> via <network_reachable>
     down route del -net <network_to_reach> netmask <netmask_IP_format> gw <network_reachable>
 ```
 
-### Testing
-
-Explain how to run the automated tests for this system.
-
-Give users explicit instructions on how to run all necessary tests. 
-Explain the libraries, such as JUnit, used for testing your software and supply all necessary commands.
-
-Explain what these tests test and why
-
-```
-Give an example command
-```
-
-## Demo
-
-Give a tour of the best features of the application.
-Add screenshots when relevant.
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system e.g. a host or a cloud provider.
-
-Mention virtualization/container tools and commands.
-
-```
-Give an example command
-```
-
-Provide instructions for connecting to servers and tell clients how to obtain necessary permissions.
-
 ## Additional Information
 
 ### Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
-### Versioning
-
-We use [SemVer](http://semver.org/) for versioning. 
-For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
-
-### License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-### Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-### Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* **Enrico Giorio** - [enricoSteez](https://github.com/enricoSteez)
+* **Daniel Correia** - [DanielCorreia21](https://github.com/DanielCorreia21)
+* **Luxithan Kailairajan** - [Luxithan](https://github.com/Luxithan)
